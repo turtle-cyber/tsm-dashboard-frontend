@@ -61,6 +61,21 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				/* SIEM-specific severity colors */
+				critical: 'hsl(var(--critical))',
+				high: 'hsl(var(--high))',
+				medium: 'hsl(var(--medium))',
+				low: 'hsl(var(--low))',
+				info: 'hsl(var(--info))',
+				/* Chart colors */
+				chart: {
+					'1': 'hsl(var(--chart-1))',
+					'2': 'hsl(var(--chart-2))',
+					'3': 'hsl(var(--chart-3))',
+					'4': 'hsl(var(--chart-4))',
+					'5': 'hsl(var(--chart-5))',
+					'6': 'hsl(var(--chart-6))',
 				}
 			},
 			borderRadius: {
