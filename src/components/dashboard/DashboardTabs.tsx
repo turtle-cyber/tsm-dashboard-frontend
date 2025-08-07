@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EndpointsDashboard } from "./EndpointsDashboard";
 
 interface DashboardTabsProps {
   children: React.ReactNode;
@@ -19,12 +20,13 @@ const dashboardTabs = [
 export function DashboardTabs({ children }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="grid w-full grid-cols-9 h-12 bg-muted/30 border border-border rounded-lg p-1">
+      <TabsList className="grid w-full h-12 bg-muted/30 border border-border rounded-lg p-1 overflow-x-auto" 
+        style={{ gridTemplateColumns: `repeat(${dashboardTabs.length}, minmax(120px, 1fr))` }}>
         {dashboardTabs.map((tab) => (
           <TabsTrigger
             key={tab.id}
             value={tab.id}
-            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-sm font-medium transition-all duration-200"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-sm font-medium transition-all duration-200 whitespace-nowrap px-2 lg:px-3"
           >
             {tab.label}
           </TabsTrigger>
@@ -35,7 +37,11 @@ export function DashboardTabs({ children }: DashboardTabsProps) {
         {children}
       </TabsContent>
       
-      {dashboardTabs.slice(1).map((tab) => (
+      <TabsContent value="endpoints" className="mt-6">
+        <EndpointsDashboard />
+      </TabsContent>
+      
+      {dashboardTabs.slice(2).map((tab) => (
         <TabsContent key={tab.id} value={tab.id} className="mt-6">
           <div className="flex items-center justify-center h-64 bg-card border border-border rounded-lg">
             <div className="text-center">

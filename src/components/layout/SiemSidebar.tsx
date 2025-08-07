@@ -36,12 +36,6 @@ const navigationItems = [
     icon: BarChart3,
     url: "/",
     section: "main"
-  },
-  {
-    title: "Purple AI",
-    icon: Brain,
-    url: "/purple-ai",
-    section: "main"
   }
 ];
 
@@ -96,6 +90,27 @@ const discoverItems = [
     icon: Activity,
     url: "/activities",
     section: "discover"
+  }
+];
+
+const complianceItems = [
+  {
+    title: "Alerts",
+    icon: AlertTriangle,
+    url: "/alerts",
+    section: "compliance"
+  },
+  {
+    title: "Exposures",
+    icon: Shield,
+    url: "/exposures",
+    section: "compliance"
+  },
+  {
+    title: "Compliance",
+    icon: CheckCircle,
+    url: "/compliance",
+    section: "compliance"
   }
 ];
 
@@ -207,6 +222,7 @@ export function SiemSidebar() {
         <SidebarSection title="" items={navigationItems} />
         <SidebarSection title="TRIAGE" items={triageItems} />
         <SidebarSection title="DISCOVER" items={discoverItems} />
+        <SidebarSection title="COMPLIANCE" items={complianceItems} />
         <SidebarSection title="AUTOMATE" items={automateItems} />
         <SidebarSection title="CONFIGURE" items={configureItems} />
       </SidebarContent>
