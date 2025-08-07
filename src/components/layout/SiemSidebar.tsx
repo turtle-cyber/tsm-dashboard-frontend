@@ -53,6 +53,12 @@ const triageItems = [
     section: "triage"
   },
   {
+    title: "Threats",
+    icon: Shield,
+    url: "/threats",
+    section: "triage"
+  },
+  {
     title: "Exposures",
     icon: Shield,
     url: "/exposures",

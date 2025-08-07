@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Alerts from "./pages/Alerts";
+import EventSearch from "./pages/EventSearch";
+import Inventory from "./pages/Inventory";
+import Threats from "./pages/Threats";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,12 +23,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/event-search" element={<EventSearch />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/threats" element={<Threats />} />
             {/* Placeholder routes for navigation items */}
             <Route path="/purple-ai" element={<div className="p-6"><h1 className="text-2xl font-bold">Purple AI</h1><p className="text-muted-foreground">Purple AI features coming soon...</p></div>} />
             <Route path="/exposures" element={<div className="p-6"><h1 className="text-2xl font-bold">Exposures</h1><p className="text-muted-foreground">Exposure management coming soon...</p></div>} />
             <Route path="/compliance" element={<div className="p-6"><h1 className="text-2xl font-bold">Compliance</h1><p className="text-muted-foreground">Compliance dashboard coming soon...</p></div>} />
-            <Route path="/event-search" element={<div className="p-6"><h1 className="text-2xl font-bold">Event Search</h1><p className="text-muted-foreground">Event search functionality coming soon...</p></div>} />
-            <Route path="/inventory" element={<div className="p-6"><h1 className="text-2xl font-bold">Inventory</h1><p className="text-muted-foreground">Asset inventory coming soon...</p></div>} />
             <Route path="/graph-explorer" element={<div className="p-6"><h1 className="text-2xl font-bold">Graph Explorer</h1><p className="text-muted-foreground">Graph exploration tools coming soon...</p></div>} />
             <Route path="/activities" element={<div className="p-6"><h1 className="text-2xl font-bold">Activities</h1><p className="text-muted-foreground">Activity monitoring coming soon...</p></div>} />
             <Route path="/hyperautomation" element={<div className="p-6"><h1 className="text-2xl font-bold">Hyperautomation</h1><p className="text-muted-foreground">Automation tools coming soon...</p></div>} />
