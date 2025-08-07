@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Filter, Calendar, Download, MoreHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,10 @@ import { mockThreatsList, threatTimeRanges, threatSeverityFilters } from "@/data
 import { mockThreatData } from "@/data/mockThreatData";
 
 export default function ThreatsList() {
+  const navigate = useNavigate();
   const [selectedTimeRange, setSelectedTimeRange] = useState("7d");
   const [selectedSeverity, setSelectedSeverity] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedThreat, setSelectedThreat] = useState<string | null>(null);
 
   const filteredThreats = mockThreatsList.filter(threat => {
     const matchesSearch = threat.threatName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,7 +140,7 @@ export default function ThreatsList() {
                   <TableRow 
                     key={threat.id} 
                     className="border-border hover:bg-muted/30 cursor-pointer"
-                    onClick={() => setSelectedThreat(threat.id)}
+                    onClick={() => navigate(`/threats/${threat.id}`)}
                   >
                     <TableCell className="text-muted-foreground font-mono text-sm">
                       {new Date(threat.firstSeen).toLocaleString()}
@@ -200,75 +201,6 @@ export default function ThreatsList() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Threat Details Sheet */}
-      <Sheet open={!!selectedThreat} onOpenChange={(open) => !open && setSelectedThreat(null)}>
-        <SheetContent className="w-full sm:w-[800px] max-w-[90vw] overflow-y-auto">
-          <SheetHeader>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSelectedThreat(null)}
-                className="lg:hidden"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <SheetTitle>Threat Details</SheetTitle>
-            </div>
-          </SheetHeader>
-          
-          <div className="mt-6">
-            {/* Threat details content would go here - reuse the existing threat details component */}
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{mockThreatData.mitigationActions.killed}</div>
-                  <div className="text-sm text-muted-foreground">Killed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{mockThreatData.mitigationActions.quarantined}</div>
-                  <div className="text-sm text-muted-foreground">Quarantined</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{mockThreatData.mitigationActions.remediated}</div>
-                  <div className="text-sm text-muted-foreground">Remediated</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{mockThreatData.mitigationActions.rolledBack}</div>
-                  <div className="text-sm text-muted-foreground">Rolled Back</div>
-                </div>
-              </div>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Threat Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">First Seen:</span>
-                      <span className="ml-2 text-foreground">{mockThreatData.firstSeen}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Last Seen:</span>
-                      <span className="ml-2 text-foreground">{mockThreatData.lastSeen}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Endpoints Affected:</span>
-                      <span className="ml-2 text-foreground">{mockThreatData.endpointsAffected}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Classification:</span>
-                      <span className="ml-2 text-foreground">{mockThreatData.details.classification}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

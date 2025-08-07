@@ -10,6 +10,7 @@ import EventSearch from "./pages/EventSearch";
 import Inventory from "./pages/Inventory";
 import Threats from "./pages/Threats";
 import ThreatsList from "./pages/ThreatsList";
+import ThreatDetails from "./pages/ThreatDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,7 +28,7 @@ const App = () => (
             <Route path="/event-search" element={<EventSearch />} />
             <Route path="/inventory" element={<Inventory />} />
         <Route path="/threats" element={<ThreatsList />} />
-        <Route path="/threats/:id" element={<Threats />} />
+        <Route path="/threats/:id" element={<ThreatDetails />} />
             {/* Placeholder routes for navigation items */}
             <Route path="/purple-ai" element={<div className="p-6"><h1 className="text-2xl font-bold">Purple AI</h1><p className="text-muted-foreground">Purple AI features coming soon...</p></div>} />
             <Route path="/exposures" element={<div className="p-6"><h1 className="text-2xl font-bold">Exposures</h1><p className="text-muted-foreground">Exposure management coming soon...</p></div>} />

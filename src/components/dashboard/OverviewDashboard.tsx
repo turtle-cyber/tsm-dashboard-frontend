@@ -3,6 +3,7 @@ import { SeverityBadge } from "@/components/ui/severity-badge";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { LineChart } from "@/components/charts/LineChart";
 import { Badge } from "@/components/ui/badge";
+import { MalwareKPICard } from "./MalwareKPICard";
 import {
   Table,
   TableBody,
@@ -184,6 +185,24 @@ export function OverviewDashboard() {
             />
           </CardContent>
         </Card>
+      </div>
+
+      {/* Third Row - Malware KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MalwareKPICard
+          title="Fileless Malware Count"
+          count={127}
+          subtitle="Last 7 Days"
+          ariaLabel="Fileless malware count"
+          trend={[12, 8, 15, 22, 18, 25, 20]}
+        />
+        <MalwareKPICard
+          title="File-Based Malware Count"
+          count={89}
+          subtitle="Last 7 Days"
+          ariaLabel="File-based malware count"
+          trend={[10, 15, 8, 12, 20, 16, 14]}
+        />
       </div>
     </div>
   );
