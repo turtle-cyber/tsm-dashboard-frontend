@@ -1,4 +1,11 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
 
 interface DonutChartData {
   name: string;
@@ -13,6 +20,7 @@ interface DonutChartProps {
   outerRadius?: number;
   showLegend?: boolean;
   showTooltip?: boolean;
+  chartHeight?: number;
   centerText?: {
     line1: string;
     line2: string;
@@ -60,11 +68,12 @@ export function DonutChart({
   outerRadius = 100,
   showLegend = true,
   showTooltip = true,
-  centerText
+  chartHeight = 250,
+  centerText,
 }: DonutChartProps) {
   return (
-    <div className="relative">
-      <ResponsiveContainer width="100%" height={250}>
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <PieChart>
           <Pie
             data={data}
@@ -83,7 +92,7 @@ export function DonutChart({
           {showLegend && <Legend content={<CustomLegend />} />}
         </PieChart>
       </ResponsiveContainer>
-      
+
       {centerText && (
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <div className="text-center">

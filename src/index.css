@@ -8,46 +8,45 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* SIEM Dashboard Dark Theme - SentinelOne Inspired */
-    --background: 217 19% 7%; /* Deep charcoal #121216 */
+    --background: 217 19% 15%; /* Deep charcoal #121216 */
     --foreground: 210 40% 98%;
-    
-    --card: 218 23% 9%; /* Slightly lighter than background */
+
+    --card: 218 23% 10%; /* Slightly lighter than background */
     --card-foreground: 210 40% 98%;
-    
+
     --popover: 218 23% 9%;
     --popover-foreground: 210 40% 98%;
-    
+
     --primary: 258 100% 67%; /* Violet accent #6952FF */
     --primary-foreground: 210 40% 98%;
-    
+
     --secondary: 217 19% 12%; /* Muted grey for secondary elements */
     --secondary-foreground: 210 40% 98%;
-    
+
     --muted: 217 19% 12%;
     --muted-foreground: 215 20.2% 65.1%;
-    
+
     --accent: 258 100% 67%;
     --accent-foreground: 210 40% 98%;
-    
+
     --destructive: 0 76% 60%; /* Critical red #FF5D5D */
     --destructive-foreground: 210 40% 98%;
-    
+
     --border: 217 19% 18%; /* Muted border color */
     --input: 217 19% 12%;
     --ring: 258 100% 67%;
-    
+
     --radius: 0.5rem;
-    
+
     /* Severity Colors */
     --critical: 0 76% 60%; /* #FF5D5D */
     --high: 25 100% 62%; /* #FF9F40 */
     --medium: 48 100% 60%; /* #FFCD38 */
     --low: 207 100% 64%; /* #4AB0FF */
     --info: 220 100% 66%; /* #4C8BFF */
-    
+
     /* Sidebar specific colors */
-    --sidebar-background: 217 23% 8%;
+    --sidebar-background: 217 23% 10%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 258 100% 67%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -55,7 +54,7 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 19% 18%;
     --sidebar-ring: 258 100% 67%;
-    
+
     /* Chart colors */
     --chart-1: 258 100% 67%; /* Primary violet */
     --chart-2: 0 76% 60%; /* Critical red */
@@ -63,10 +62,18 @@ All colors MUST be HSL.
     --chart-4: 48 100% 60%; /* Medium yellow */
     --chart-5: 207 100% 64%; /* Low blue */
     --chart-6: 220 100% 66%; /* Info blue */
-    
+
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
-    --gradient-critical: linear-gradient(135deg, hsl(var(--critical)), hsl(var(--critical) / 0.8));
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--primary) / 0.8)
+    );
+    --gradient-critical: linear-gradient(
+      135deg,
+      hsl(var(--critical)),
+      hsl(var(--critical) / 0.8)
+    );
   }
 }
 
@@ -85,16 +92,16 @@ All colors MUST be HSL.
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: hsl(var(--muted));
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 4px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }

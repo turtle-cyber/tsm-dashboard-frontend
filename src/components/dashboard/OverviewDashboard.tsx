@@ -19,7 +19,7 @@ import {
   alertsOverTimeData,
   alertsTimeLineConfig,
   highValueAssetsData,
-  agentsAttentionData
+  agentsAttentionData,
 } from "@/data/mockData";
 
 const getRiskIcon = (iconName: string) => {
@@ -41,15 +41,15 @@ const getRiskIcon = (iconName: string) => {
 
 export function OverviewDashboard() {
   // Prepare classification data with percentages
-  const classificationDataWithPercentages = classificationData.map(item => ({
+  const classificationDataWithPercentages = classificationData.map((item) => ({
     ...item,
-    percentage: item.value
+    percentage: item.value,
   }));
 
   // Prepare agents attention data with percentages
-  const agentsDataWithPercentages = agentsAttentionData.map(item => ({
+  const agentsDataWithPercentages = agentsAttentionData.map((item) => ({
     ...item,
-    percentage: item.value
+    percentage: item.value,
   }));
 
   return (
@@ -59,18 +59,25 @@ export function OverviewDashboard() {
         {/* Alerts by Severity */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Alerts by Severity</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Alerts by Severity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {severityData.map((item) => (
-                <div key={item.severity} className="flex items-center justify-between">
+                <div
+                  key={item.severity}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center space-x-3">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: item.color }}
                     />
-                    <SeverityBadge severity={item.severity.toLowerCase() as any}>
+                    <SeverityBadge
+                      severity={item.severity.toLowerCase() as any}
+                    >
                       {item.severity}
                     </SeverityBadge>
                   </div>
@@ -86,14 +93,17 @@ export function OverviewDashboard() {
         {/* Alerts by Classification */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Alerts by Classification</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Alerts by Classification
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <DonutChart
+              chartHeight={300}
               data={classificationDataWithPercentages}
               innerRadius={50}
               outerRadius={80}
-              showLegend={false}
+              showLegend={true}
             />
           </CardContent>
         </Card>
@@ -101,7 +111,9 @@ export function OverviewDashboard() {
         {/* Critical and High Alerts Over Time */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Critical and High Alerts Created Over Time</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Critical and High Alerts Created Over Time
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <LineChart
@@ -120,7 +132,9 @@ export function OverviewDashboard() {
         {/* Top High-Value Assets With Alerts */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Top High-Value Assets With Alerts</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Top High-Value Assets With Alerts
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -153,16 +167,12 @@ export function OverviewDashboard() {
                     <TableCell>
                       <div className="flex space-x-1">
                         {asset.riskFactors.map((icon, iconIndex) => (
-                          <div key={iconIndex}>
-                            {getRiskIcon(icon)}
-                          </div>
+                          <div key={iconIndex}>{getRiskIcon(icon)}</div>
                         ))}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {asset.category}
-                      </Badge>
+                      <Badge variant="outline">{asset.category}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -174,13 +184,15 @@ export function OverviewDashboard() {
         {/* Agents Requiring Attention */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Agents Requiring Attention</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Agents Requiring Attention
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <DonutChart
               data={agentsDataWithPercentages}
-              innerRadius={60}
-              outerRadius={100}
+              innerRadius={50}
+              outerRadius={80}
               showLegend={true}
             />
           </CardContent>

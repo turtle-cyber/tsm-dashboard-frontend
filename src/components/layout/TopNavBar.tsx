@@ -8,7 +8,7 @@ import {
   HelpCircle,
   User,
   Calendar,
-  Link
+  Link,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +36,7 @@ export function TopNavBar() {
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center space-x-4">
           <SidebarTrigger />
-          
+
           {/* Tenant Selector */}
           <div className="flex items-center space-x-2">
             <Globe className="h-4 w-4 text-muted-foreground" />
@@ -85,7 +85,10 @@ export function TopNavBar() {
           </Select>
 
           {/* Cloud Native Security Indicator */}
-          <Badge variant="secondary" className="flex items-center space-x-1 px-2 py-1">
+          <Badge
+            variant="secondary"
+            className="flex items-center space-x-1 px-2 py-1"
+          >
             <Shield className="h-3 w-3 text-primary" />
             <span className="text-xs">Cloud Native Security</span>
             <Link className="h-3 w-3" />
@@ -114,7 +117,11 @@ export function TopNavBar() {
           {/* User Avatar */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-primary/10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 rounded-full bg-primary/10"
+              >
                 <span className="text-sm font-medium text-primary">J</span>
               </Button>
             </DropdownMenuTrigger>
