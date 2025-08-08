@@ -15,7 +15,7 @@ import {
   Eye,
   Users,
   Menu,
-  X
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -35,8 +35,8 @@ const navigationItems = [
     title: "Dashboards",
     icon: BarChart3,
     url: "/",
-    section: "main"
-  }
+    section: "main",
+  },
 ];
 
 const triageItems = [
@@ -44,26 +44,26 @@ const triageItems = [
     title: "Alerts",
     icon: AlertTriangle,
     url: "/alerts",
-    section: "triage"
+    section: "triage",
   },
   {
     title: "Threats",
     icon: Shield,
     url: "/threats",
-    section: "triage"
+    section: "triage",
   },
   {
     title: "Exposures",
     icon: Shield,
     url: "/exposures",
-    section: "triage"
+    section: "triage",
   },
   {
     title: "Compliance",
     icon: CheckCircle,
     url: "/compliance",
-    section: "triage"
-  }
+    section: "triage",
+  },
 ];
 
 const discoverItems = [
@@ -71,26 +71,26 @@ const discoverItems = [
     title: "Event Search",
     icon: Search,
     url: "/event-search",
-    section: "discover"
+    section: "discover",
   },
   {
     title: "Inventory",
     icon: Package,
     url: "/inventory",
-    section: "discover"
+    section: "discover",
   },
   {
     title: "Graph Explorer",
     icon: Network,
     url: "/graph-explorer",
-    section: "discover"
+    section: "discover",
   },
   {
     title: "Activities",
     icon: Activity,
     url: "/activities",
-    section: "discover"
-  }
+    section: "discover",
+  },
 ];
 
 const complianceItems = [
@@ -98,20 +98,20 @@ const complianceItems = [
     title: "Alerts",
     icon: AlertTriangle,
     url: "/alerts",
-    section: "compliance"
+    section: "compliance",
   },
   {
     title: "Exposures",
     icon: Shield,
     url: "/exposures",
-    section: "compliance"
+    section: "compliance",
   },
   {
     title: "Compliance",
     icon: CheckCircle,
     url: "/compliance",
-    section: "compliance"
-  }
+    section: "compliance",
+  },
 ];
 
 const automateItems = [
@@ -119,14 +119,14 @@ const automateItems = [
     title: "Hyperautomation",
     icon: Zap,
     url: "/hyperautomation",
-    section: "automate"
+    section: "automate",
   },
   {
     title: "RemoteOps",
     icon: MonitorSpeaker,
     url: "/remoteops",
-    section: "automate"
-  }
+    section: "automate",
+  },
 ];
 
 const configureItems = [
@@ -134,14 +134,14 @@ const configureItems = [
     title: "Detections",
     icon: Eye,
     url: "/detections",
-    section: "configure"
+    section: "configure",
   },
   {
     title: "Agent Management",
     icon: Users,
     url: "/agent-management",
-    section: "configure"
-  }
+    section: "configure",
+  },
 ];
 
 export function SiemSidebar() {
@@ -165,12 +165,12 @@ export function SiemSidebar() {
         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
     );
 
-  const SidebarSection = ({ 
-    title, 
-    items 
-  }: { 
-    title: string; 
-    items: typeof navigationItems 
+  const SidebarSection = ({
+    title,
+    items,
+  }: {
+    title: string;
+    items: typeof navigationItems;
   }) => (
     <SidebarGroup>
       <SidebarGroupLabel className="text-xs uppercase text-muted-foreground font-semibold tracking-wider px-3">
@@ -183,8 +183,13 @@ export function SiemSidebar() {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <NavLink to={item.url} className={getNavClasses(isActiveItem)}>
-                    <item.icon className={cn("h-4 w-4", !collapsed && "mr-3")} />
+                  <NavLink
+                    to={item.url}
+                    className={getNavClasses(isActiveItem)}
+                  >
+                    <item.icon
+                      className={cn("h-4 w-4", !collapsed && "mr-3")}
+                    />
                     {!collapsed && <span>{item.title}</span>}
                   </NavLink>
                 </SidebarMenuButton>
@@ -208,12 +213,18 @@ export function SiemSidebar() {
         <div className="px-3 mb-6">
           <div className="flex items-center">
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-md">
-              <span className="text-xs font-bold text-primary-foreground">S</span>
+              <span className="text-xs font-bold text-primary-foreground">
+                S
+              </span>
             </div>
             {!collapsed && (
               <div className="ml-3">
-                <div className="text-sm font-semibold text-sidebar-foreground">Singularity™</div>
-                <div className="text-xs text-muted-foreground">Operations Center</div>
+                <div className="text-sm font-semibold text-sidebar-foreground">
+                  Singularity™
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Operations Center
+                </div>
               </div>
             )}
           </div>
@@ -222,8 +233,7 @@ export function SiemSidebar() {
         <SidebarSection title="" items={navigationItems} />
         <SidebarSection title="TRIAGE" items={triageItems} />
         <SidebarSection title="DISCOVER" items={discoverItems} />
-        <SidebarSection title="COMPLIANCE" items={complianceItems} />
-        <SidebarSection title="AUTOMATE" items={automateItems} />
+        {/* <SidebarSection title="COMPLIANCE" items={complianceItems} /> */}
         <SidebarSection title="CONFIGURE" items={configureItems} />
       </SidebarContent>
     </Sidebar>

@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# NPM Files
+.package-lock.json
+node_modules/
+
+#environment files
+*.env

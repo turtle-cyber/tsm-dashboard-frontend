@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 218 23% 9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 258 100% 67%; /* Violet accent #6952FF */
+    --primary: 357 92% 43%; /* Turtleneck Red */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217 19% 12%; /* Muted grey for secondary elements */
@@ -32,8 +32,8 @@ All colors MUST be HSL.
     --destructive: 0 76% 60%; /* Critical red #FF5D5D */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 19% 18%; /* Muted border color */
-    --input: 217 19% 12%;
+    --border: 25 19% 18%; /* Muted border color */
+    --input: 217 19% 20%;
     --ring: 258 100% 67%;
 
     --radius: 0.5rem;
