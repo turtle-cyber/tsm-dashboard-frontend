@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Search,
   Filter,
@@ -44,173 +44,76 @@ import {
 } from "@/components/ui/sheet";
 import { LineChart } from "@/components/charts/LineChart";
 import {
-  mockEvents,
   eventFields,
   eventHistogramData,
   type EventData,
 } from "@/data/mockEventData";
-import { cn } from "@/lib/utils";
 
-import {
-  useGetIndices,
-  useGetPaginatedLogs,
-} from "@/hooks/eventSearch.asyncActions";
+import { PAGINATED_LOGS, GET_INDICES } from "../constants/eventSearchEndpoints";
 
-const timeRangeOptions = [
-  { label: "Last 4 hours", value: "4h" },
-  { label: "Last 24 hours", value: "24h" },
-  { label: "Last 7 days", value: "7d" },
-  { label: "Last 30 days", value: "30d" },
-  { label: "Custom", value: "custom" },
-];
+import { http } from "../data/config";
+import { toast } from "sonner";
+import { SkeletonTableRows } from "@/lib/helpers";
+import EventDetailsPanel from "@/components/ui/event-details-panel";
 
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case "critical":
-      return "text-red-400 bg-red-400/10";
-    case "high":
-      return "text-orange-400 bg-orange-400/10";
-    case "medium":
-      return "text-yellow-400 bg-yellow-400/10";
-    case "low":
-      return "text-blue-400 bg-blue-400/10";
-    case "info":
-      return "text-cyan-400 bg-cyan-400/10";
-    default:
-      return "text-muted-foreground bg-muted/10";
-  }
-};
+type DocRef = { id: string; indexName: string };
 
-const EventDetailsPanel = ({
-  event,
-  isOpen,
-  onClose,
-}: {
-  event: EventData;
-  isOpen: boolean;
-  onClose: () => void;
-}) => (
-  <Sheet open={isOpen} onOpenChange={onClose}>
-    <SheetContent className="w-[600px] sm:max-w-[600px] bg-card border-border">
-      <SheetHeader>
-        <SheetTitle className="text-foreground flex items-center gap-2">
-          <Eye className="h-5 w-5" />
-          Event Details
-        </SheetTitle>
-      </SheetHeader>
+// Custom API hooks
+function useGetIndices() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-      <div className="mt-6 space-y-6">
-        {/* Event Header */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{event.vendor.logo}</span>
-            <span className="font-semibold text-lg">{event.vendor.name}</span>
-          </div>
-          <h2 className="text-xl font-bold text-foreground">
-            {event.eventType}
-          </h2>
-          <Badge className={cn("text-xs", getSeverityColor(event.severity))}>
-            {event.severity.toUpperCase()}
-          </Badge>
-        </div>
+  const fetchIndices = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await http.get(GET_INDICES);
+      setData(res.data.indices || []);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        <Separator />
+  useEffect(() => {
+    fetchIndices();
+  }, [fetchIndices]);
 
-        {/* Event Details */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
-              Event Information
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Event Time:</span>
-                <span className="text-foreground">{event.eventTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Event Type:</span>
-                <span className="text-foreground">{event.eventType}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Source:</span>
-                <span className="text-foreground text-xs">{event.source}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Destination:</span>
-                <span className="text-foreground text-xs">
-                  {event.destination}
-                </span>
-              </div>
-            </div>
-          </div>
+  return { data, loading, error, refetch: fetchIndices };
+}
 
-          <Separator />
+function useGetPaginatedLogs(indexName?: string) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-          {/* Actor Details */}
-          {event.details.actor && (
-            <div>
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
-                Actor
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">User Name:</span>
-                  <span className="text-foreground">
-                    {event.details.actor.user?.name || "N/A"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await http.get(PAGINATED_LOGS, {
+        params: { indexName },
+      });
+      setData(res.data.hits || []);
+      toast.success("Logs fetched successfully");
+    } catch (err) {
+      toast.error("Failed to fetch logs for index: " + indexName);
+      setError(err as Error);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [indexName]);
 
-          <Separator />
+  useEffect(() => {
+    if (!indexName) return;
+    fetchLogs();
+  }, [indexName, fetchLogs]);
 
-          {/* Device Details */}
-          {event.details.device && (
-            <div>
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
-                Device
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Hostname:</span>
-                  <span className="text-foreground">
-                    {event.details.device.hostname || "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">IP Address:</span>
-                  <span className="text-foreground">
-                    {event.details.device.ip || "N/A"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Data Source */}
-          {event.details.dataSource && (
-            <div>
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-3">
-                Data Source
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Vendor:</span>
-                  <span className="text-foreground">
-                    {event.details.dataSource.vendor || "N/A"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </SheetContent>
-  </Sheet>
-);
+  return { data, loading, error, refetch: fetchLogs };
+}
 
 function truncate(s?: string, n = 60) {
   if (!s) return "";
@@ -219,8 +122,9 @@ function truncate(s?: string, n = 60) {
 
 export default function EventSearch() {
   const [selectedIndex, setSelectedIndex] = useState<string>("");
-  const [tableData, setTableData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<DocRef | null>(null);
 
   const {
     data: indicesList,
@@ -283,22 +187,6 @@ export default function EventSearch() {
                   className="pl-10"
                 />
               </div>
-
-              {/* <Select
-                value={selectedTimeRange}
-                onValueChange={setSelectedTimeRange}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeRangeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select> */}
 
               <Button className="bg-primary hover:bg-primary/90">Search</Button>
             </div>
@@ -413,7 +301,7 @@ export default function EventSearch() {
             </div>
 
             {/* Results Table */}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto py-2">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
@@ -427,44 +315,87 @@ export default function EventSearch() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tableData.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      className="border-border hover:bg-muted/50 cursor-pointer"
-                      // onClick={() => setSelectedEvent(row)} // if you use a details pane
-                    >
-                      <TableCell className="text-xs">{row.serial}</TableCell>
-                      <TableCell className="text-xs">{row.id}</TableCell>
-                      <TableCell className="text-xs">{row.time}</TableCell>
-                      <TableCell className="text-xs">
-                        {row.agent ?? "-"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {row.level ?? "-"}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {truncate(row.description, 80)}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {truncate(row.event, 80)}
+                  {logsLoading && !logsError && (
+                    <SkeletonTableRows rows={10} cols={6} />
+                  )}
+
+                  {!logsLoading && logsError && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-sm text-red-400"
+                      >
+                        Failed to fetch logs
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
+
+                  {!logsLoading && !logsError && logsData.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-sm text-muted-foreground"
+                      >
+                        No Data Found
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {!logsLoading &&
+                    !logsError &&
+                    logsData.length > 0 &&
+                    logsData.map((row: any) => {
+                      const docId = row._id ?? row.id;
+                      const indexName = row._index ?? selectedIndex; // selectedIndex from your Select
+
+                      return (
+                        <TableRow
+                          key={row.id ?? row._id}
+                          className="border-border hover:bg-muted/50 cursor-pointer"
+                          onClick={() =>
+                            setSelectedDoc({
+                              id: String(docId),
+                              indexName: String(indexName),
+                            })
+                          }
+                        >
+                          <TableCell className="text-xs">
+                            {row.serial}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {row.id ?? row._id}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {row.time ?? row["@timestamp"]}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {row.agent ?? "-"}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {row.level ?? "-"}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {truncate(row.description, 80)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </div>
           </div>
         </div>
       </div>
-
       {/* Event Details Panel */}
-      {/* {selectedEvent && (
-        <EventDetailsPanel
-          event={selectedEvent}
-          isOpen={!!selectedEvent}
-          onClose={() => setSelectedEvent(null)}
-        />
-      )} */}
+      {selectedDoc && (
+        <>
+          <EventDetailsPanel
+            doc={selectedDoc}
+            isOpen={!!selectedDoc}
+            onClose={() => setSelectedDoc(null)}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -220,10 +220,10 @@ export function SiemSidebar() {
             {!collapsed && (
               <div className="ml-3">
                 <div className="text-sm font-semibold text-sidebar-foreground">
-                  Singularity™
+                  Turtleneck
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Operations Center
+                  Security Manager Dashboard
                 </div>
               </div>
             )}
