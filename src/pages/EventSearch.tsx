@@ -4,9 +4,10 @@ import {
   Filter,
   Save,
   Share2,
-  Calendar,
   ChevronDown,
-  Eye,
+  Minus,
+  Plus,
+  Sidebar,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Table,
   TableBody,
@@ -35,13 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+
 import { LineChart } from "@/components/charts/LineChart";
 import {
   eventFields,
@@ -49,31 +44,50 @@ import {
   type EventData,
 } from "@/data/mockEventData";
 
-import { PAGINATED_LOGS, GET_INDICES } from "../constants/eventSearchEndpoints";
+import {
+  PAGINATED_LOGS,
+  GET_INDICES,
+  GET_FIELD_BY_PATTERN,
+  GET_EVENT_HISTOGRAM,
+} from "../constants/eventSearchEndpoints";
 
 import { http } from "../data/config";
 import { toast } from "sonner";
 import { SkeletonTableRows } from "@/lib/helpers";
 import EventDetailsPanel from "@/components/ui/event-details-panel";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 type DocRef = { id: string; indexName: string };
 
 // Custom API hooks
 function useGetIndices() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [indicesList, setIndicesList] = useState([]);
+  const [indicesListLoading, setIndicesListLoading] = useState(true);
+  const [indicesListError, setIndicesListError] = useState(null);
 
   const fetchIndices = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setIndicesListLoading(true);
+    setIndicesListError(null);
     try {
-      const res = await http.get(GET_INDICES);
-      setData(res.data.indices || []);
+      const res = await http.get(GET_INDICES, { params: { as: "patterns" } });
+
+      setIndicesList(res.data.patterns || []);
     } catch (err) {
-      setError(err);
+      setIndicesListError(err);
     } finally {
-      setLoading(false);
+      setIndicesListLoading(false);
     }
   }, []);
 
@@ -81,29 +95,36 @@ function useGetIndices() {
     fetchIndices();
   }, [fetchIndices]);
 
-  return { data, loading, error, refetch: fetchIndices };
+  return {
+    indicesList,
+    indicesListLoading,
+    indicesListError,
+    refetch: fetchIndices,
+  };
 }
 
 function useGetPaginatedLogs(indexName?: string) {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [paginatedLogsData, setPaginatedLogsData] = useState([]);
+  const [paginatedLogsLoading, setPaginatedLogsLoading] = useState(false);
+  const [paginatedLogsError, setPaginatedLogsError] = useState<Error | null>(
+    null
+  );
 
   const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setPaginatedLogsLoading(true);
+    setPaginatedLogsError(null);
     try {
       const res = await http.get(PAGINATED_LOGS, {
         params: { indexName },
       });
-      setData(res.data.hits || []);
+      setPaginatedLogsData(res.data.hits || []);
       toast.success("Logs fetched successfully");
     } catch (err) {
       toast.error("Failed to fetch logs for index: " + indexName);
-      setError(err as Error);
-      setData([]);
+      setPaginatedLogsError(err as Error);
+      setPaginatedLogsData([]);
     } finally {
-      setLoading(false);
+      setPaginatedLogsLoading(false);
     }
   }, [indexName]);
 
@@ -112,7 +133,80 @@ function useGetPaginatedLogs(indexName?: string) {
     fetchLogs();
   }, [indexName, fetchLogs]);
 
-  return { data, loading, error, refetch: fetchLogs };
+  return {
+    paginatedLogsData,
+    paginatedLogsLoading,
+    paginatedLogsError,
+    refetch: fetchLogs,
+  };
+}
+
+function useGetFieldsList(patternName?: string) {
+  const [fieldsListData, setFieldsListData] = useState([]);
+  const [fieldsListLoading, setFieldsListLoading] = useState(null);
+  const [fieldsListError, setFieldsListError] = useState(null);
+
+  const fetchFieldsList = useCallback(async () => {
+    setFieldsListLoading(true);
+    setFieldsListError(null);
+    setFieldsListData([]);
+    try {
+      const res = await http.get(GET_FIELD_BY_PATTERN, {
+        params: { pattern: patternName },
+      });
+      setFieldsListData(res.data.fields);
+    } catch (err) {
+      setFieldsListError(err);
+      setFieldsListData([]);
+    } finally {
+      setFieldsListLoading(false);
+    }
+  }, [patternName]);
+
+  useEffect(() => {
+    if (patternName) fetchFieldsList();
+  }, [fetchFieldsList]);
+
+  return {
+    fieldsListData,
+    fieldsListLoading,
+    fieldsListError,
+    refetch: fetchFieldsList,
+  };
+}
+
+function useGetEventHistogram(patternName?: string) {
+  const [histogramData, setHistogramData] = useState([]);
+  const [histogramLoading, setHistogramLoading] = useState(false);
+  const [histogramError, setHistogramError] = useState(false);
+
+  const fetchHistogram = useCallback(async () => {
+    setHistogramLoading(true);
+    setHistogramError(null);
+    setHistogramData([]);
+    try {
+      const res = await http.get(GET_EVENT_HISTOGRAM, {
+        params: { pattern: patternName },
+      });
+      setHistogramData(res.data?.data);
+    } catch (err) {
+      setHistogramError(err);
+      setHistogramData([]);
+    } finally {
+      setHistogramLoading(false);
+    }
+  }, [patternName]);
+
+  useEffect(() => {
+    if (patternName) fetchHistogram();
+  }, [fetchHistogram]);
+
+  return {
+    histogramData,
+    histogramLoading,
+    histogramError,
+    refetch: fetchHistogram,
+  };
 }
 
 function truncate(s?: string, n = 60) {
@@ -121,28 +215,94 @@ function truncate(s?: string, n = 60) {
 }
 
 export default function EventSearch() {
-  const [selectedIndex, setSelectedIndex] = useState<string>("");
+  const [selectedPattern, setSelectedPattern] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<DocRef | null>(null);
+  const [selectedFields, setSelectedFields] = useState<string[]>(["_source"]);
+  const [fieldsOpen, setFieldsOpen] = useState(true);
 
   const {
-    data: indicesList,
-    loading: indicesLoading,
-    error: indicesError,
+    indicesList: indicesList,
+    indicesListLoading: indicesLoading,
+    indicesListError: indicesError,
   } = useGetIndices();
 
   useEffect(() => {
-    if (indicesList.length > 0 && !selectedIndex) {
-      setSelectedIndex(indicesList[0].index);
+    if (indicesList.length > 0 && !selectedPattern) {
+      setSelectedPattern(indicesList[0].pattern);
     }
-  }, [indicesList, selectedIndex]);
+  }, [indicesList, selectedPattern]);
 
   const {
-    data: logsData,
-    loading: logsLoading,
-    error: logsError,
-  } = useGetPaginatedLogs(selectedIndex || undefined);
+    paginatedLogsData: logsData,
+    paginatedLogsLoading: logsLoading,
+    paginatedLogsError: logsError,
+  } = useGetPaginatedLogs(selectedPattern || undefined);
+
+  const {
+    fieldsListData: fieldsData,
+    fieldsListLoading: fieldsLoading,
+    fieldsListError: fieldsError,
+  } = useGetFieldsList(selectedPattern || undefined);
+
+  const {
+    histogramData: rawHistogramData,
+    histogramLoading: histogramLoading,
+    histogramError: histogramError,
+  } = useGetEventHistogram(selectedPattern || undefined);
+
+  //Helper functions for Fields Panel
+  const addField = useCallback((value: string) => {
+    setSelectedFields((prev) => {
+      if (value === "_source") return ["_source"]; // exclusive
+      const next = prev.filter((v) => v !== "_source"); // drop _source if any other selected
+      return next.includes(value) ? next : [...next, value];
+    });
+  }, []);
+
+  const removeField = useCallback((value: string) => {
+    setSelectedFields((prev) => {
+      const next = prev.filter((v) => v !== value);
+      // if nothing left, default back to _source
+      return next.length ? next : ["_source"];
+    });
+  }, []);
+
+  const hasNonSource = selectedFields.some((v) => v !== "_source");
+
+  const selectedEntries = (fieldsData || []).filter((f: any) =>
+    selectedFields.includes(f.value ?? f.id)
+  );
+
+  const availableEntries = (fieldsData || []).filter(
+    (f: any) => !selectedFields.includes(f.value ?? f.id)
+  );
+
+  // truncate helper with tooltip
+  const FieldLabel: React.FC<{ text: string }> = ({ text }) => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-foreground truncate flex-1">{text}</span>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="max-w-xs break-words">
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
+  // label like "8:00 AM" in IST (match your mock data style)
+  const timeFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const chartHistogramData = rawHistogramData.map((d: any) => ({
+    time: timeFmt.format(new Date(d.key)), // or use d.time if your API already returns ISO
+    count: d.count ?? 0,
+  }));
 
   const histogramConfig = [
     {
@@ -165,14 +325,18 @@ export default function EventSearch() {
           {/* Search Controls */}
           <div className="space-y-4">
             <div className="flex gap-4">
-              <Select value={selectedIndex} onValueChange={setSelectedIndex}>
+              <Select
+                value={selectedPattern}
+                onValueChange={setSelectedPattern}
+              >
                 <SelectTrigger className="w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {indicesList.map((e) => (
-                    <SelectItem key={e.uuid} value={e.index}>
-                      {e.index}
+                    <SelectItem key={e.id ?? e.pattern} value={e.pattern}>
+                      {e.pattern}
+                      {e.indexCount != null ? ` (${e.indexCount})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -235,32 +399,132 @@ export default function EventSearch() {
         {/* Results Section */}
         <div className="flex-1 flex">
           {/* Fields Panel */}
-          <div className="w-80 border-r border-border bg-card/30">
+          <div
+            className={`border-r border-border bg-card/30 flex-none overflow-hidden transition-[width] duration-200
+    ${fieldsOpen ? "w-[20rem]" : "w-16"}`}
+            aria-expanded={fieldsOpen}
+          >
             <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-                  Fields
-                </h3>
-              </div>
-              <Input placeholder="Filter fields" className="mb-4 text-xs" />
+              <div className="flex items-center justify-between mb-4 p-1">
+                {fieldsOpen ? (
+                  <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                    Fields
+                  </h3>
+                ) : (
+                  <span className="sr-only">Fields</span>
+                )}
 
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-2">
-                  {eventFields.map((field) => (
-                    <div
-                      key={field.name}
-                      className="flex items-center justify-between py-2 px-2 hover:bg-muted/80 rounded text-xs cursor-pointer"
-                    >
-                      <span className="text-foreground truncate flex-1">
-                        {field.name}
-                      </span>
-                      <span className="text-muted-foreground ml-2">
-                        {field.count}
-                      </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+                  onClick={() => setFieldsOpen((v) => !v)}
+                  aria-label={
+                    fieldsOpen ? "Collapse fields panel" : "Expand fields panel"
+                  }
+                  title={fieldsOpen ? "Collapse" : "Expand"}
+                >
+                  <Sidebar className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {fieldsOpen && (
+                <>
+                  <Input placeholder="Search fields" className="mb-4 text-xs" />
+
+                  <ScrollArea className="h-[600px] border border-border rounded-md">
+                    <div className="p-2">
+                      <Accordion
+                        type="multiple"
+                        defaultValue={["selected", "available"]}
+                        className="w-full"
+                      >
+                        {/* Selected fields */}
+                        <AccordionItem
+                          value="selected"
+                          className="border-b border-border"
+                        >
+                          <AccordionTrigger className="text-xs">
+                            Selected fields ({selectedEntries.length})
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-1">
+                              {selectedEntries.length === 0 && (
+                                <div className="text-xs text-muted-foreground py-2">
+                                  No fields selected
+                                </div>
+                              )}
+                              {selectedEntries.map((field: any) => {
+                                const value = field.value ?? field.id;
+                                const isSource = value === "_source";
+                                const disabled = isSource && hasNonSource; // gray out _source if others selected
+
+                                return (
+                                  <div
+                                    key={`sel-${value}`}
+                                    className={`flex items-center gap-2 px-2 py-1 rounded-md text-xs hover:bg-muted/70 ${
+                                      disabled
+                                        ? "opacity-50 pointer-events-none"
+                                        : ""
+                                    }`}
+                                  >
+                                    <FieldLabel text={value} />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 shrink-0"
+                                      onClick={() => removeField(value)}
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Available fields */}
+                        <AccordionItem value="available">
+                          <AccordionTrigger className="text-xs">
+                            Available fields ({availableEntries.length})
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-1">
+                              {availableEntries.map((field: any) => {
+                                const value = field.value ?? field.id;
+                                const isSource = value === "_source";
+                                const disabled = isSource && hasNonSource; // _source disabled if others selected
+
+                                return (
+                                  <div
+                                    key={`avail-${value}`}
+                                    className={`flex items-center gap-2 py-1 px-2 rounded-md text-xs hover:bg-muted/70 ${
+                                      disabled
+                                        ? "opacity-50 pointer-events-none"
+                                        : "cursor-pointer"
+                                    }`}
+                                  >
+                                    <FieldLabel text={value} />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 shrink-0"
+                                      onClick={() => addField(value)}
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                  </ScrollArea>
+                </>
+              )}
             </div>
           </div>
 
@@ -290,10 +554,10 @@ export default function EventSearch() {
               <Card>
                 <CardContent className="p-4">
                   <LineChart
-                    data={eventHistogramData}
+                    data={chartHistogramData}
                     lines={histogramConfig}
                     xAxisKey="time"
-                    height={120}
+                    height={150}
                     showLegend={false}
                   />
                 </CardContent>
@@ -306,7 +570,7 @@ export default function EventSearch() {
                 <TableHeader>
                   <TableRow className="border-border">
                     <TableHead>Serial No.</TableHead>
-                    <TableHead>ID</TableHead>
+                    <TableHead>Index</TableHead>
                     <TableHead>Time</TableHead>
                     <TableHead>Agent</TableHead>
                     <TableHead>Level</TableHead>
@@ -346,7 +610,7 @@ export default function EventSearch() {
                     logsData.length > 0 &&
                     logsData.map((row: any) => {
                       const docId = row._id ?? row.id;
-                      const indexName = row._index ?? selectedIndex; // selectedIndex from your Select
+                      const indexName = row._index ?? selectedPattern; // selectedPattern from your Select
 
                       return (
                         <TableRow
@@ -363,7 +627,7 @@ export default function EventSearch() {
                             {row.serial}
                           </TableCell>
                           <TableCell className="text-xs">
-                            {row.id ?? row._id}
+                            {row.index ?? row._index}
                           </TableCell>
                           <TableCell className="text-xs">
                             {row.time ?? row["@timestamp"]}
