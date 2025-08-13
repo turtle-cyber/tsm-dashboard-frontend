@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 # NPM Files
-.package-lock.json
+package-lock.json
 node_modules/
 
 #environment files

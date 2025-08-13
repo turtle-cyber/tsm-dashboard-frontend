@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   Filter,
@@ -57,8 +57,13 @@ import {
 
 import { http } from "../data/config";
 import { toast } from "sonner";
-import { SkeletonTableRows } from "@/lib/helpers";
+import {
+  SkeletonTableRows,
+  resolveNowRelativeToISO,
+  type CanonicalRange,
+} from "@/lib/helpers";
 import EventDetailsPanel from "@/components/ui/event-details-panel";
+import DateTimeFilter from "@/components/DateTimeFilter";
 import {
   Tooltip,
   TooltipContent,
@@ -108,7 +113,13 @@ function useGetIndices() {
   };
 }
 
-function useGetPaginatedLogs(indexName?: string, page = 1, size = 50) {
+function useGetPaginatedLogs(
+  indexName?: string,
+  page = 1,
+  size = 50,
+  startTime?: string,
+  endTime?: string
+) {
   const [paginatedLogsData, setPaginatedLogsData] = useState({
     hits: [] as any[],
     page: 1,
@@ -117,6 +128,8 @@ function useGetPaginatedLogs(indexName?: string, page = 1, size = 50) {
     hasPrev: false,
     hasNext: false,
     count: 0,
+    startTime: "", // <—
+    endTime: "",
   });
   const [paginatedLogsLoading, setPaginatedLogsLoading] = useState(false);
   const [paginatedLogsError, setPaginatedLogsError] = useState<Error | null>(
@@ -128,7 +141,7 @@ function useGetPaginatedLogs(indexName?: string, page = 1, size = 50) {
     setPaginatedLogsError(null);
     try {
       const res = await http.get(PAGINATED_LOGS, {
-        params: { indexName, page, size },
+        params: { indexName, page, size, startTime, endTime },
       });
       setPaginatedLogsData(
         res.data ?? {
@@ -139,6 +152,8 @@ function useGetPaginatedLogs(indexName?: string, page = 1, size = 50) {
           hasPrev: false,
           hasNext: false,
           count: 0,
+          startTime: "", // <= include these in the fallback too
+          endTime: "",
         }
       );
       toast.success("Logs fetched successfully");
@@ -149,7 +164,7 @@ function useGetPaginatedLogs(indexName?: string, page = 1, size = 50) {
     } finally {
       setPaginatedLogsLoading(false);
     }
-  }, [indexName, page, size]);
+  }, [indexName, page, size, startTime, endTime]);
 
   useEffect(() => {
     if (!indexName) return;
@@ -198,7 +213,11 @@ function useGetFieldsList(patternName?: string) {
   };
 }
 
-function useGetEventHistogram(patternName?: string) {
+function useGetEventHistogram(
+  patternName?: string,
+  startTime?: string,
+  endTime?: string
+) {
   const [histogramData, setHistogramData] = useState([]);
   const [histogramLoading, setHistogramLoading] = useState(false);
   const [histogramError, setHistogramError] = useState(false);
@@ -209,7 +228,7 @@ function useGetEventHistogram(patternName?: string) {
     setHistogramData([]);
     try {
       const res = await http.get(GET_EVENT_HISTOGRAM, {
-        params: { pattern: patternName },
+        params: { pattern: patternName, startTime, endTime },
       });
       setHistogramData(res.data?.data);
     } catch (err) {
@@ -218,7 +237,7 @@ function useGetEventHistogram(patternName?: string) {
     } finally {
       setHistogramLoading(false);
     }
-  }, [patternName]);
+  }, [patternName, startTime, endTime]);
 
   useEffect(() => {
     if (patternName) fetchHistogram();
@@ -248,7 +267,29 @@ export default function EventSearch() {
   const [pageInput, setPageInput] = useState("1");
   const [logsData, setLogsData] = useState([]);
   const [totalResults, setTotalResults] = useState(0);
+  const [timeRange, setTimeRange] = useState<CanonicalRange>({
+    mode: "relative",
+    from: "now-24h",
+    to: "now",
+  });
+  // labels from backend (human-readable strings)
+  const [startLabel, setStartLabel] = useState("");
+  const [endLabel, setEndLabel] = useState("");
+  // Freeze the "now" used for resolving relative ranges
+  const [anchorNow, setAnchorNow] = useState<number | null>(null);
 
+  const { startISO, endISO } = useMemo(() => {
+    const anchor = anchorNow ? new Date(anchorNow) : new Date();
+    const toISO = (s: string) =>
+      timeRange.mode === "relative" ? resolveNowRelativeToISO(s, anchor) : s;
+
+    return {
+      startISO: toISO(timeRange.from),
+      endISO: toISO(timeRange.to),
+    };
+  }, [timeRange, anchorNow]);
+
+  //Fetch Indiceslist and refetch when pattern changes
   const {
     indicesList: indicesList,
     indicesListLoading: indicesLoading,
@@ -261,11 +302,18 @@ export default function EventSearch() {
     }
   }, [indicesList, selectedPattern]);
 
+  //Fetch Paginated Logs and refetch when selected pattern changes
   const {
     paginatedLogsData: paginated,
     paginatedLogsLoading: logsLoading,
     paginatedLogsError: logsError,
-  } = useGetPaginatedLogs(selectedPattern || undefined, page, pageSize);
+  } = useGetPaginatedLogs(
+    selectedPattern || undefined,
+    page,
+    pageSize,
+    startISO,
+    endISO
+  );
 
   useEffect(() => {
     setLogsData(paginated.hits);
@@ -273,27 +321,23 @@ export default function EventSearch() {
   }, [paginated]);
 
   useEffect(() => {
-    if (indicesList.length > 0 && !selectedPattern) {
-      setSelectedPattern(indicesList[0].pattern);
-    }
-  }, [indicesList, selectedPattern]);
-
-  useEffect(() => {
     setPage(1);
     setPageInput("1");
-  }, [selectedPattern]);
+  }, [selectedPattern, timeRange.from, timeRange.to, timeRange.mode]);
 
+  //Fetch All Possible Fields For Each Pattern
   const {
     fieldsListData: fieldsData,
     fieldsListLoading: fieldsLoading,
     fieldsListError: fieldsError,
   } = useGetFieldsList(selectedPattern || undefined);
 
+  //Fetch All Event Count for Histogram For Each Pattern
   const {
     histogramData: rawHistogramData,
     histogramLoading: histogramLoading,
     histogramError: histogramError,
-  } = useGetEventHistogram(selectedPattern || undefined);
+  } = useGetEventHistogram(selectedPattern || undefined, startISO, endISO);
 
   //Helper functions for Fields Panel
   const addField = useCallback((value: string) => {
@@ -364,6 +408,20 @@ export default function EventSearch() {
         <div className="py-2 px-6 border-b border-border">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-foreground">EVENT SEARCH</h1>
+            <DateTimeFilter
+              value={timeRange}
+              summary={
+                startLabel && endLabel
+                  ? `${startLabel} — ${endLabel}`
+                  : undefined
+              }
+              onApply={(r) => {
+                setTimeRange(r);
+                setAnchorNow(Date.now()); // <— freeze "now" here
+                setPage(1);
+                setPageInput("1");
+              }}
+            />
           </div>
 
           {/* Search Controls */}
@@ -590,7 +648,11 @@ export default function EventSearch() {
                   </span>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  7:58 - 11:58 am (UTC-4)
+                  {logsLoading
+                    ? "…"
+                    : `${paginated.startTime || "-"} — ${
+                        paginated.endTime || "-"
+                      }`}
                 </div>
               </div>
 

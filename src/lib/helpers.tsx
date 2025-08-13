@@ -51,3 +51,28 @@ export function formatTimestamp(isoString: string): string {
 
   return `${month} ${day} @ ${year}, ${time}.${millis}`;
 }
+
+// Supports strings like: now, now-15m, now-1h, now-24h, now-7d, now-1M, now-1y
+export function resolveNowRelativeToISO(rel: string, now = new Date()): string {
+  if (!rel || rel === "now") return new Date(now).toISOString();
+  const m = /^now-(\d+)([smhdwMy])$/.exec(rel);
+  if (!m) return rel; // assume already ISO
+  const n = parseInt(m[1], 10);
+  const u = m[2] as "s" | "m" | "h" | "d" | "w" | "M" | "y";
+  const d = new Date(now);
+  const ops = {
+    s: () => d.setSeconds(d.getSeconds() - n),
+    m: () => d.setMinutes(d.getMinutes() - n),
+    h: () => d.setHours(d.getHours() - n),
+    d: () => d.setDate(d.getDate() - n),
+    w: () => d.setDate(d.getDate() - 7 * n),
+    M: () => d.setMonth(d.getMonth() - n),
+    y: () => d.setFullYear(d.getFullYear() - n),
+  };
+  ops[u]();
+  return d.toISOString();
+}
+
+export type CanonicalRange =
+  | { mode: "relative"; from: string; to: string } // e.g. now-24h -> now
+  | { mode: "absolute"; from: string; to: string }; // ISO strings
