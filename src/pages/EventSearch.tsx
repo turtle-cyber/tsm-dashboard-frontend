@@ -8,6 +8,10 @@ import {
   Minus,
   Plus,
   Sidebar,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronRight,
+  ChevronsRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,6 +72,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type DocRef = { id: string; indexName: string };
 
@@ -103,8 +108,16 @@ function useGetIndices() {
   };
 }
 
-function useGetPaginatedLogs(indexName?: string) {
-  const [paginatedLogsData, setPaginatedLogsData] = useState([]);
+function useGetPaginatedLogs(indexName?: string, page = 1, size = 50) {
+  const [paginatedLogsData, setPaginatedLogsData] = useState({
+    hits: [] as any[],
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    hasPrev: false,
+    hasNext: false,
+    count: 0,
+  });
   const [paginatedLogsLoading, setPaginatedLogsLoading] = useState(false);
   const [paginatedLogsError, setPaginatedLogsError] = useState<Error | null>(
     null
@@ -115,18 +128,28 @@ function useGetPaginatedLogs(indexName?: string) {
     setPaginatedLogsError(null);
     try {
       const res = await http.get(PAGINATED_LOGS, {
-        params: { indexName },
+        params: { indexName, page, size },
       });
-      setPaginatedLogsData(res.data.hits || []);
+      setPaginatedLogsData(
+        res.data ?? {
+          hits: [],
+          page: 1,
+          totalPages: 1,
+          total: 0,
+          hasPrev: false,
+          hasNext: false,
+          count: 0,
+        }
+      );
       toast.success("Logs fetched successfully");
     } catch (err) {
       toast.error("Failed to fetch logs for index: " + indexName);
       setPaginatedLogsError(err as Error);
-      setPaginatedLogsData([]);
+      setPaginatedLogsData((d) => ({ ...d, hits: [], count: 0 }));
     } finally {
       setPaginatedLogsLoading(false);
     }
-  }, [indexName]);
+  }, [indexName, page, size]);
 
   useEffect(() => {
     if (!indexName) return;
@@ -220,6 +243,11 @@ export default function EventSearch() {
   const [selectedDoc, setSelectedDoc] = useState<DocRef | null>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(["_source"]);
   const [fieldsOpen, setFieldsOpen] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [pageInput, setPageInput] = useState("1");
+  const [logsData, setLogsData] = useState([]);
+  const [totalResults, setTotalResults] = useState(0);
 
   const {
     indicesList: indicesList,
@@ -234,10 +262,26 @@ export default function EventSearch() {
   }, [indicesList, selectedPattern]);
 
   const {
-    paginatedLogsData: logsData,
+    paginatedLogsData: paginated,
     paginatedLogsLoading: logsLoading,
     paginatedLogsError: logsError,
-  } = useGetPaginatedLogs(selectedPattern || undefined);
+  } = useGetPaginatedLogs(selectedPattern || undefined, page, pageSize);
+
+  useEffect(() => {
+    setLogsData(paginated.hits);
+    setTotalResults(paginated.total);
+  }, [paginated]);
+
+  useEffect(() => {
+    if (indicesList.length > 0 && !selectedPattern) {
+      setSelectedPattern(indicesList[0].pattern);
+    }
+  }, [indicesList, selectedPattern]);
+
+  useEffect(() => {
+    setPage(1);
+    setPageInput("1");
+  }, [selectedPattern]);
 
   const {
     fieldsListData: fieldsData,
@@ -335,7 +379,7 @@ export default function EventSearch() {
                 <SelectContent>
                   {indicesList.map((e) => (
                     <SelectItem key={e.id ?? e.pattern} value={e.pattern}>
-                      {e.pattern}
+                      {e.id}
                       {e.indexCount != null ? ` (${e.indexCount})` : ""}
                     </SelectItem>
                   ))}
@@ -535,15 +579,15 @@ export default function EventSearch() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <span className="text-sm">
-                    <span className="font-bold">5,779,010</span> matching events
+                    <span className="font-bold">
+                      {logsLoading ? (
+                        <Skeleton />
+                      ) : (
+                        totalResults?.toLocaleString("en-IN")
+                      )}
+                    </span>{" "}
+                    matching events
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    5 minutes/bar
-                  </span>
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    Expand Graph
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   7:58 - 11:58 am (UTC-4)
@@ -565,87 +609,92 @@ export default function EventSearch() {
             </div>
 
             {/* Results Table */}
-            <div className="flex-1 overflow-auto py-2">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border">
-                    <TableHead>Serial No.</TableHead>
-                    <TableHead>Index</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Agent</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Description</TableHead>
-                    {/* <TableHead>Event</TableHead> */}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logsLoading && !logsError && (
-                    <SkeletonTableRows rows={10} cols={6} />
-                  )}
-
-                  {!logsLoading && logsError && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center text-sm text-red-400"
-                      >
-                        Failed to fetch logs
-                      </TableCell>
+            <div className="flex-1 overflow-hidden p-2">
+              <div
+                id="event-table-scroll"
+                className="h-full overflow-auto rounded-xl border border-border custom-scroll px-2"
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border">
+                      <TableHead>Serial No.</TableHead>
+                      <TableHead>Index</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Agent</TableHead>
+                      <TableHead>Level</TableHead>
+                      <TableHead>Description</TableHead>
+                      {/* <TableHead>Event</TableHead> */}
                     </TableRow>
-                  )}
+                  </TableHeader>
+                  <TableBody>
+                    {logsLoading && !logsError && (
+                      <SkeletonTableRows rows={10} cols={6} />
+                    )}
 
-                  {!logsLoading && !logsError && logsData.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center text-sm text-muted-foreground"
-                      >
-                        No Data Found
-                      </TableCell>
-                    </TableRow>
-                  )}
-
-                  {!logsLoading &&
-                    !logsError &&
-                    logsData.length > 0 &&
-                    logsData.map((row: any) => {
-                      const docId = row._id ?? row.id;
-                      const indexName = row._index ?? selectedPattern; // selectedPattern from your Select
-
-                      return (
-                        <TableRow
-                          key={row.id ?? row._id}
-                          className="border-border hover:bg-muted/50 cursor-pointer"
-                          onClick={() =>
-                            setSelectedDoc({
-                              id: String(docId),
-                              indexName: String(indexName),
-                            })
-                          }
+                    {!logsLoading && logsError && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-sm text-red-400"
                         >
-                          <TableCell className="text-xs">
-                            {row.serial}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {row.index ?? row._index}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {row.time ?? row["@timestamp"]}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {row.agent ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {row.level ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {truncate(row.description, 80)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
+                          Failed to fetch logs
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {!logsLoading && !logsError && logsData.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-sm text-muted-foreground"
+                        >
+                          No Data Found
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {!logsLoading &&
+                      !logsError &&
+                      logsData.length > 0 &&
+                      logsData.map((row: any) => {
+                        const docId = row._id ?? row.id;
+                        const indexName = row._index ?? selectedPattern; // selectedPattern from your Select
+
+                        return (
+                          <TableRow
+                            key={row.id ?? row._id}
+                            className="border-border hover:bg-muted/50 cursor-pointer"
+                            onClick={() =>
+                              setSelectedDoc({
+                                id: String(docId),
+                                indexName: String(indexName),
+                              })
+                            }
+                          >
+                            <TableCell className="text-xs">
+                              {row.serial}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {row.index ?? row._index}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {row.time ?? row["@timestamp"]}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {row.agent ?? "-"}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {row.level ?? "-"}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {truncate(row.description, 80)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         </div>
@@ -660,6 +709,101 @@ export default function EventSearch() {
           />
         </>
       )}
+      {/* Floating pagination controls */}
+      <div className="pointer-events-none fixed left-1/2 bottom-6 z-50 -translate-x-1/2">
+        <div
+          className="pointer-events-auto backdrop-blur-sm bg-card/60 hover:bg-card/95 transition-opacity
+                  border border-border shadow-xl rounded-md px-3 py-2 flex items-center gap-2
+                  opacity-60 hover:opacity-100"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg"
+            onClick={() => {
+              setPage(1);
+              setPageInput("1");
+            }}
+            disabled={page <= 1}
+            title="First page"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg"
+            onClick={() => {
+              const next = Math.max(1, page - 1);
+              setPage(next);
+              setPageInput(String(next));
+            }}
+            disabled={page <= 1}
+            title="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {/* current page input */}
+          <div className="flex items-center gap-2 text-sm">
+            <Input
+              className="h-8 w-16 text-center"
+              value={pageInput}
+              onChange={(e) =>
+                setPageInput(e.target.value.replace(/[^\d]/g, ""))
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const n = Math.max(
+                    1,
+                    Math.min(
+                      Number(pageInput || "1"),
+                      paginated.totalPages || 1
+                    )
+                  );
+                  setPage(n);
+                  setPageInput(String(n));
+                }
+              }}
+            />
+            <span className="text-muted-foreground">
+              / {paginated.totalPages || 1}
+            </span>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg"
+            onClick={() => {
+              // If user typed a number but didn't press Enter, next should still go from the current page
+              const next = Math.min(page + 1, paginated.totalPages || page + 1);
+              setPage(next);
+              setPageInput(String(next));
+            }}
+            disabled={!paginated.hasNext}
+            title="Next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg"
+            onClick={() => {
+              const last = paginated.totalPages || 1;
+              setPage(last);
+              setPageInput(String(last));
+            }}
+            disabled={page >= (paginated.totalPages || 1)}
+            title="Last page"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
