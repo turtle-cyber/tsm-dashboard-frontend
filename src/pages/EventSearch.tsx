@@ -398,6 +398,79 @@ export default function EventSearch() {
     },
   ];
 
+  // Get nested dotted path from an object, e.g., getByPath(obj, "data.win.system.message")
+  function getByPath(obj: any, path: string) {
+    try {
+      return path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
+    } catch {
+      return undefined;
+    }
+  }
+
+  // Decide which dynamic fields to show in the table based on selection.
+  // - If nothing except _source is selected => show only _source.
+  // - Otherwise, show all selected fields except _source and @timestamp (Time is fixed).
+  const dynamicFields = useMemo(() => {
+    const nonSource = selectedFields.filter((f) => f !== "_source");
+    if (nonSource.length === 0) return ["_source"];
+    return nonSource.filter((f) => f !== "@timestamp");
+  }, [selectedFields]);
+
+  // Pretty label for headers (you can tweak if you want nicer titles)
+  const headerLabel = (f: string) => (f === "_source" ? "Document" : f);
+
+  // Resolve a value for a given field from a row.
+  // Priorities:
+  //  - Special cases (time, index, _source)
+  //  - Known flattened fields from backend (agent, level, description)
+  //  - Fallback to row._source (when backend starts returning it) via dotted path
+  //  - Else, try direct flat property; else "—"
+  function valueForField(row: any, field: string): any {
+    if (field === "_source") {
+      // Prefer full _source if present; else compact view of the row
+      const src = row?._source;
+      if (src) {
+        try {
+          return JSON.stringify(src);
+        } catch {
+          return "[object]";
+        }
+      }
+      // Fallback: compose a tiny summary from known columns
+      const summary: any = {};
+      if (row.agent) summary["agent.name"] = row.agent;
+      if (row.level != null) summary["rule.level"] = row.level;
+      if (row.description) summary["rule.description"] = row.description;
+      try {
+        const s = JSON.stringify(summary);
+        return s === "{}" ? "—" : s;
+      } catch {
+        return "—";
+      }
+    }
+
+    if (field === "@timestamp" || field === "timestamp") {
+      return row.time ?? row["@timestamp"] ?? row["timestamp"] ?? "—";
+    }
+
+    // Map common dotted paths to flattened fields you already return
+    if (field === "agent.name")
+      return row.agent ?? getByPath(row?._source, field) ?? "—";
+    if (field === "rule.level")
+      return row.level ?? getByPath(row?._source, field) ?? "—";
+    if (field === "rule.description")
+      return row.description ?? getByPath(row?._source, field) ?? "—";
+
+    // Fallbacks
+    const direct = row[field];
+    if (direct != null) return direct;
+
+    const dotted = getByPath(row?._source, field);
+    if (dotted != null) return dotted;
+
+    return "—";
+  }
+
   return (
     <div className="flex h-full">
       {/* Main Content */}
@@ -454,24 +527,6 @@ export default function EventSearch() {
 
               <Button className="bg-primary hover:bg-primary/90">Search</Button>
             </div>
-
-            {/* Action Buttons */}
-            {/* <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Save className="h-4 w-4 mr-1" />
-                    Save
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Save Search</DropdownMenuItem>
-                  <DropdownMenuItem>Save as Alert</DropdownMenuItem>
-                  <DropdownMenuItem>Export Results</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div> */}
           </div>
         </div>
 
@@ -656,24 +711,26 @@ export default function EventSearch() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border">
-                      <TableHead>Serial No.</TableHead>
-                      <TableHead>Index</TableHead>
+                      <TableHead>Serial</TableHead>
                       <TableHead>Time</TableHead>
-                      <TableHead>Agent</TableHead>
-                      <TableHead>Level</TableHead>
-                      <TableHead>Description</TableHead>
-                      {/* <TableHead>Event</TableHead> */}
+                      {dynamicFields.map((f) => (
+                        <TableHead key={`h-${f}`}>{headerLabel(f)}</TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {logsLoading && !logsError && (
-                      <SkeletonTableRows rows={10} cols={6} />
+                      <SkeletonTableRows
+                        rows={10}
+                        cols={2 + dynamicFields.length}
+                      />
                     )}
 
                     {!logsLoading && logsError && (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={2 + dynamicFields.length}
                           className="text-center text-sm text-red-400"
                         >
                           Failed to fetch logs
@@ -684,7 +741,7 @@ export default function EventSearch() {
                     {!logsLoading && !logsError && logsData.length === 0 && (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={2 + dynamicFields.length}
                           className="text-center text-sm text-muted-foreground"
                         >
                           No Data Found
@@ -695,9 +752,13 @@ export default function EventSearch() {
                     {!logsLoading &&
                       !logsError &&
                       logsData.length > 0 &&
-                      logsData.map((row: any) => {
+                      logsData.map((row: any, i: number) => {
                         const docId = row._id ?? row.id;
-                        const indexName = row._index ?? selectedPattern; // selectedPattern from your Select
+                        const indexName = row._index ?? selectedPattern;
+
+                        // robust serial fallback if backend didn't send one
+                        const serial =
+                          row.serial ?? (page - 1) * pageSize + (i + 1);
 
                         return (
                           <TableRow
@@ -710,24 +771,37 @@ export default function EventSearch() {
                               })
                             }
                           >
+                            {/* Serial (fixed) */}
+                            <TableCell className="text-xs">{serial}</TableCell>
+
+                            {/* Time (fixed) */}
                             <TableCell className="text-xs">
-                              {row.serial}
+                              {row.time ??
+                                row["@timestamp"] ??
+                                row["timestamp"] ??
+                                "—"}
                             </TableCell>
-                            <TableCell className="text-xs">
-                              {row.index ?? row._index}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {row.time ?? row["@timestamp"]}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {row.agent ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {row.level ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {truncate(row.description, 80)}
-                            </TableCell>
+
+                            {/* Dynamic fields (default: "_source" → "Document") */}
+                            {dynamicFields.map((f) => {
+                              const v = valueForField(row, f);
+                              const s =
+                                typeof v === "string"
+                                  ? truncate(v, 120)
+                                  : typeof v === "number"
+                                  ? v
+                                  : v == null
+                                  ? "—"
+                                  : String(v);
+                              return (
+                                <TableCell
+                                  key={`c-${f}`}
+                                  className="text-xs text-muted-foreground"
+                                >
+                                  {s}
+                                </TableCell>
+                              );
+                            })}
                           </TableRow>
                         );
                       })}
