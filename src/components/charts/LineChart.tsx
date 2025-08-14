@@ -57,7 +57,10 @@ export function LineChart({
 }: LineChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsLineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+      <RechartsLineChart
+        data={data}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      >
         {showGrid && (
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         )}
@@ -92,7 +95,7 @@ export function LineChart({
             stroke={line.color}
             strokeWidth={line.strokeWidth || 2}
             name={line.name}
-            dot={{ fill: line.color, r: 4 }}
+            dot={{ fill: line.color, r: 2 }}
             activeDot={{ r: 6 }}
           />
         ))}

@@ -37,22 +37,6 @@ export function TopNavBar() {
         <div className="flex items-center space-x-4">
           <SidebarTrigger />
 
-          {/* Tenant Selector */}
-          <div className="flex items-center space-x-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <Select defaultValue="global">
-              <SelectTrigger className="w-24 h-8 border-none bg-transparent text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="global">Global</SelectItem>
-                <SelectItem value="us-east">US East</SelectItem>
-                <SelectItem value="eu-west">EU West</SelectItem>
-                <SelectItem value="asia-pacific">Asia Pacific</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Search Box */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -69,36 +53,6 @@ export function TopNavBar() {
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* Date Range Picker */}
-          <Select defaultValue="last-7-days">
-            <SelectTrigger className="w-32 h-8 border-border bg-muted/50">
-              <Calendar className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last-hour">Last Hour</SelectItem>
-              <SelectItem value="last-24-hours">Last 24 Hours</SelectItem>
-              <SelectItem value="last-7-days">Last 7 Days</SelectItem>
-              <SelectItem value="last-30-days">Last 30 Days</SelectItem>
-              <SelectItem value="custom">Custom Range</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Cloud Native Security Indicator */}
-          <Badge
-            variant="secondary"
-            className="flex items-center space-x-1 px-2 py-1"
-          >
-            <Shield className="h-3 w-3 text-primary" />
-            <span className="text-xs">Cloud Native Security</span>
-            <Link className="h-3 w-3" />
-          </Badge>
-
-          {/* Marketplace */}
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Store className="h-4 w-4" />
-          </Button>
-
           {/* Help */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

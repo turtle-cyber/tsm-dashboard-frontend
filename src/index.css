@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 218 23% 9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 258 100% 67%; /* Violet accent #6952FF */
+    --primary: 357 92% 43%; /* Turtleneck Red */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217 19% 12%; /* Muted grey for secondary elements */
@@ -26,14 +26,14 @@ All colors MUST be HSL.
     --muted: 217 19% 12%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 258 100% 67%;
+    --accent: 350 52% 20%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 76% 60%; /* Critical red #FF5D5D */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 19% 18%; /* Muted border color */
-    --input: 217 19% 12%;
+    --border: 25 19% 18%; /* Muted border color */
+    --input: 217 19% 20%;
     --ring: 258 100% 67%;
 
     --radius: 0.5rem;
@@ -48,7 +48,7 @@ All colors MUST be HSL.
     /* Sidebar specific colors */
     --sidebar-background: 217 23% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 258 100% 67%;
+    --sidebar-primary: 350 52% 20%;
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 217 19% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
@@ -85,24 +85,35 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-}
 
-@layer utilities {
-  /* Custom scrollbar for dark theme */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
+  @layer base {
+    * {
+      @apply border-border;
+    }
+    body {
+      @apply bg-background text-foreground font-sans antialiased;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-  }
+    /* Firefox (applies to all scrollable elements) */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: hsla(357, 92%, 43%, 0.5) hsl(var(--muted));
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+    /* WebKit (Chrome/Edge/Safari) */
+    *::-webkit-scrollbar {
+      width: 10px;
+    }
+    *::-webkit-scrollbar-track {
+      background: hsl(var(--muted)); /* track color */
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: hsla(357, 92%, 43%, 0.5); /* Turtleneck Red, mild */
+      border-radius: 8px;
+      border: 2px solid hsl(var(--background)); /* creates the gap */
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background-color: hsla(357, 92%, 43%, 0.7);
+    }
   }
 }
