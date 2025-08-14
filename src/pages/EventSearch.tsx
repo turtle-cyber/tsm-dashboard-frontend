@@ -42,11 +42,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { LineChart } from "@/components/charts/LineChart";
-import {
-  eventFields,
-  eventHistogramData,
-  type EventData,
-} from "@/data/mockEventData";
 
 import {
   PAGINATED_LOGS,
@@ -68,7 +63,6 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 
 import {
@@ -370,9 +364,13 @@ export default function EventSearch() {
   const FieldLabel: React.FC<{ text: string }> = ({ text }) => (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="text-foreground truncate flex-1">{text}</span>
-        </TooltipTrigger>
+        <span
+          className="block flex-1 w-0 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-foreground"
+          title={text}
+        >
+          {text}
+        </span>
+
         <TooltipContent side="right" className="max-w-xs break-words">
           {text}
         </TooltipContent>
@@ -458,14 +456,7 @@ export default function EventSearch() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-1" />
-                Start
-              </Button>
-              <Button variant="outline" size="sm">
-                End
-              </Button>
+            {/* <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -480,21 +471,7 @@ export default function EventSearch() {
                   <DropdownMenuItem>Export Results</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Share2 className="h-4 w-4 mr-1" />
-                    Share
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Share Link</DropdownMenuItem>
-                  <DropdownMenuItem>Copy Query</DropdownMenuItem>
-                  <DropdownMenuItem>Export CSV</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            </div> */}
           </div>
         </div>
 
