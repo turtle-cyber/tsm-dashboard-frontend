@@ -281,6 +281,7 @@ export default function EventSearch() {
   const [startLabel, setStartLabel] = useState("");
   const [endLabel, setEndLabel] = useState("");
   const [anchorNow, setAnchorNow] = useState<number | null>(null);
+  const [fieldSearch, setFieldSearch] = useState("");
 
   const { startISO, endISO } = useMemo(() => {
     const anchor = anchorNow ? new Date(anchorNow) : new Date();
@@ -338,6 +339,11 @@ export default function EventSearch() {
     setPage(1);
     setPageInput("1");
   }, [selectedPattern, timeRange.from, timeRange.to, timeRange.mode]);
+
+  // clear the panel search when the pattern changes
+  useEffect(() => {
+    setFieldSearch("");
+  }, [selectedPattern]);
 
   // Search button handler
   const runSearch = useCallback(() => {
@@ -517,6 +523,22 @@ export default function EventSearch() {
     return "—";
   }
 
+  const matchesField = useCallback((f: any, q: string) => {
+    if (!q) return true;
+    const hay = String(f.label ?? f.value ?? f.id ?? "").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  }, []);
+
+  const filteredSelectedEntries = useMemo(
+    () => selectedEntries.filter((f: any) => matchesField(f, fieldSearch)),
+    [selectedEntries, matchesField, fieldSearch]
+  );
+
+  const filteredAvailableEntries = useMemo(
+    () => availableEntries.filter((f: any) => matchesField(f, fieldSearch)),
+    [availableEntries, matchesField, fieldSearch]
+  );
+
   return (
     <div className="flex h-full">
       {/* Main Content */}
@@ -619,7 +641,13 @@ export default function EventSearch() {
 
               {fieldsOpen && (
                 <>
-                  <Input placeholder="Search fields" className="mb-4 text-xs" />
+                  <Input
+                    value={fieldSearch}
+                    onChange={(e) => setFieldSearch(e.target.value)}
+                    placeholder="Search fields"
+                    className="mb-4 text-xs"
+                    autoComplete="off"
+                  />
 
                   <ScrollArea className="h-[600px] border border-border rounded-md">
                     <div className="p-2">
@@ -634,20 +662,25 @@ export default function EventSearch() {
                           className="border-b border-border"
                         >
                           <AccordionTrigger className="text-xs">
-                            Selected fields ({selectedEntries.length})
+                            Selected fields (
+                            {fieldSearch
+                              ? `${filteredSelectedEntries.length}/${selectedEntries.length}`
+                              : selectedEntries.length}
+                            )
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="space-y-1">
-                              {selectedEntries.length === 0 && (
+                              {filteredSelectedEntries.length === 0 && (
                                 <div className="text-xs text-muted-foreground py-2">
-                                  No fields selected
+                                  {fieldSearch
+                                    ? "No matches"
+                                    : "No fields selected"}
                                 </div>
                               )}
-                              {selectedEntries.map((field: any) => {
+                              {filteredSelectedEntries.map((field: any) => {
                                 const value = field.value ?? field.id;
                                 const isSource = value === "_source";
-                                const disabled = isSource && hasNonSource; // gray out _source if others selected
-
+                                const disabled = isSource && hasNonSource;
                                 return (
                                   <div
                                     key={`sel-${value}`}
@@ -676,15 +709,23 @@ export default function EventSearch() {
                         {/* Available fields */}
                         <AccordionItem value="available">
                           <AccordionTrigger className="text-xs">
-                            Available fields ({availableEntries.length})
+                            Available fields (
+                            {fieldSearch
+                              ? `${filteredAvailableEntries.length}/${availableEntries.length}`
+                              : availableEntries.length}
+                            )
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="space-y-1">
-                              {availableEntries.map((field: any) => {
+                              {filteredAvailableEntries.length === 0 && (
+                                <div className="text-xs text-muted-foreground py-2">
+                                  No matches
+                                </div>
+                              )}
+                              {filteredAvailableEntries.map((field: any) => {
                                 const value = field.value ?? field.id;
                                 const isSource = value === "_source";
-                                const disabled = isSource && hasNonSource; // _source disabled if others selected
-
+                                const disabled = isSource && hasNonSource;
                                 return (
                                   <div
                                     key={`avail-${value}`}
