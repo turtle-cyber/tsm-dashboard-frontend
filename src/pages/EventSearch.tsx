@@ -103,7 +103,8 @@ function useGetPaginatedLogs(
   size = 50,
   startTime?: string,
   endTime?: string,
-  source_includes_csv?: string
+  source_includes_csv?: string,
+  searchString?: string
 ) {
   const [paginatedLogsData, setPaginatedLogsData] = useState({
     hits: [] as any[],
@@ -136,6 +137,7 @@ function useGetPaginatedLogs(
           ...(source_includes_csv
             ? { source_includes: source_includes_csv }
             : {}),
+          ...(searchString ? { searchString } : {}),
         },
       });
       setPaginatedLogsData(
@@ -159,7 +161,15 @@ function useGetPaginatedLogs(
     } finally {
       setPaginatedLogsLoading(false);
     }
-  }, [indexName, page, size, startTime, endTime, source_includes_csv]);
+  }, [
+    indexName,
+    page,
+    size,
+    startTime,
+    endTime,
+    source_includes_csv,
+    searchString,
+  ]);
 
   useEffect(() => {
     if (!indexName) return;
@@ -254,6 +264,7 @@ function truncate(s?: string, n = 60) {
 export default function EventSearch() {
   const [selectedPattern, setSelectedPattern] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<DocRef | null>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(["_source"]);
   const [fieldsOpen, setFieldsOpen] = useState(false);
@@ -267,10 +278,8 @@ export default function EventSearch() {
     from: "now-24h",
     to: "now",
   });
-  // labels from backend (human-readable strings)
   const [startLabel, setStartLabel] = useState("");
   const [endLabel, setEndLabel] = useState("");
-  // Freeze the "now" used for resolving relative ranges
   const [anchorNow, setAnchorNow] = useState<number | null>(null);
 
   const { startISO, endISO } = useMemo(() => {
@@ -316,7 +325,8 @@ export default function EventSearch() {
     pageSize,
     startISO,
     endISO,
-    listSourceIncludesCsv
+    listSourceIncludesCsv,
+    appliedSearch || undefined
   );
 
   useEffect(() => {
@@ -328,6 +338,13 @@ export default function EventSearch() {
     setPage(1);
     setPageInput("1");
   }, [selectedPattern, timeRange.from, timeRange.to, timeRange.mode]);
+
+  // Search button handler
+  const runSearch = useCallback(() => {
+    setAppliedSearch(searchQuery.trim()); // commit the current input
+    setPage(1);
+    setPageInput("1");
+  }, [searchQuery]);
 
   //Fetch All Possible Fields For Each Pattern
   const {
@@ -549,12 +566,21 @@ export default function EventSearch() {
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") runSearch();
+                  }}
                   placeholder="Search events..."
                   className="pl-10"
                 />
               </div>
 
-              <Button className="bg-primary hover:bg-primary/90">Search</Button>
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={runSearch}
+                disabled={logsLoading}
+              >
+                Search
+              </Button>
             </div>
           </div>
         </div>
