@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
-  Filter,
-  Save,
-  Share2,
-  ChevronDown,
   Minus,
   Plus,
   Sidebar,
@@ -32,14 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import { LineChart } from "@/components/charts/LineChart";
 
@@ -112,7 +102,8 @@ function useGetPaginatedLogs(
   page = 1,
   size = 50,
   startTime?: string,
-  endTime?: string
+  endTime?: string,
+  source_includes_csv?: string
 ) {
   const [paginatedLogsData, setPaginatedLogsData] = useState({
     hits: [] as any[],
@@ -124,6 +115,7 @@ function useGetPaginatedLogs(
     count: 0,
     startTime: "", // <—
     endTime: "",
+    ...(source_includes_csv ? { source_includes: source_includes_csv } : {}),
   });
   const [paginatedLogsLoading, setPaginatedLogsLoading] = useState(false);
   const [paginatedLogsError, setPaginatedLogsError] = useState<Error | null>(
@@ -135,7 +127,16 @@ function useGetPaginatedLogs(
     setPaginatedLogsError(null);
     try {
       const res = await http.get(PAGINATED_LOGS, {
-        params: { indexName, page, size, startTime, endTime },
+        params: {
+          indexName,
+          page,
+          size,
+          startTime,
+          endTime,
+          ...(source_includes_csv
+            ? { source_includes: source_includes_csv }
+            : {}),
+        },
       });
       setPaginatedLogsData(
         res.data ?? {
@@ -158,7 +159,7 @@ function useGetPaginatedLogs(
     } finally {
       setPaginatedLogsLoading(false);
     }
-  }, [indexName, page, size, startTime, endTime]);
+  }, [indexName, page, size, startTime, endTime, source_includes_csv]);
 
   useEffect(() => {
     if (!indexName) return;
@@ -255,7 +256,7 @@ export default function EventSearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<DocRef | null>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(["_source"]);
-  const [fieldsOpen, setFieldsOpen] = useState(true);
+  const [fieldsOpen, setFieldsOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [pageInput, setPageInput] = useState("1");
@@ -296,6 +297,14 @@ export default function EventSearch() {
     }
   }, [indicesList, selectedPattern]);
 
+  // Convert selected fields → CSV for API
+  // Default: request full _source; otherwise request only selected (excluding @timestamp)
+  const listSourceIncludesCsv = useMemo(() => {
+    const nonSource = selectedFields.filter((f) => f !== "_source");
+    if (nonSource.length === 0) return "_source";
+    return nonSource.filter((f) => f !== "@timestamp").join(",");
+  }, [selectedFields]);
+
   //Fetch Paginated Logs and refetch when selected pattern changes
   const {
     paginatedLogsData: paginated,
@@ -306,7 +315,8 @@ export default function EventSearch() {
     page,
     pageSize,
     startISO,
-    endISO
+    endISO,
+    listSourceIncludesCsv
   );
 
   useEffect(() => {
@@ -349,6 +359,23 @@ export default function EventSearch() {
       return next.length ? next : ["_source"];
     });
   }, []);
+
+  // Reconcile selected fields against the freshly loaded field list for this pattern
+  useEffect(() => {
+    if (!fieldsData || fieldsData.length === 0) return;
+
+    // Allowed = all fields available for the current pattern + "_source"
+    const allowed = new Set<string>([
+      "_source",
+      ...fieldsData.map((f: any) => f.value ?? f.id),
+    ]);
+
+    setSelectedFields((prev) => {
+      const next = prev.filter((f) => allowed.has(f));
+      // If nothing valid remains, default back to "_source"
+      return next.length ? next : ["_source"];
+    });
+  }, [selectedPattern, fieldsData]);
 
   const hasNonSource = selectedFields.some((v) => v !== "_source");
 
@@ -427,7 +454,6 @@ export default function EventSearch() {
   //  - Else, try direct flat property; else "—"
   function valueForField(row: any, field: string): any {
     if (field === "_source") {
-      // Prefer full _source if present; else compact view of the row
       const src = row?._source;
       if (src) {
         try {
@@ -436,7 +462,6 @@ export default function EventSearch() {
           return "[object]";
         }
       }
-      // Fallback: compose a tiny summary from known columns
       const summary: any = {};
       if (row.agent) summary["agent.name"] = row.agent;
       if (row.level != null) summary["rule.level"] = row.level;
@@ -453,7 +478,12 @@ export default function EventSearch() {
       return row.time ?? row["@timestamp"] ?? row["timestamp"] ?? "—";
     }
 
-    // Map common dotted paths to flattened fields you already return
+    // NEW: support _index column explicitly
+    if (field === "_index") {
+      // prefer cosmetic "index" if your backend sets it (system-*), else raw _index
+      return row.index ?? row._index ?? "—";
+    }
+
     if (field === "agent.name")
       return row.agent ?? getByPath(row?._source, field) ?? "—";
     if (field === "rule.level")
@@ -461,7 +491,6 @@ export default function EventSearch() {
     if (field === "rule.description")
       return row.description ?? getByPath(row?._source, field) ?? "—";
 
-    // Fallbacks
     const direct = row[field];
     if (direct != null) return direct;
 
@@ -556,7 +585,7 @@ export default function EventSearch() {
                   aria-label={
                     fieldsOpen ? "Collapse fields panel" : "Expand fields panel"
                   }
-                  title={fieldsOpen ? "Collapse" : "Expand"}
+                  title={fieldsOpen ? "Collapse" : "Expand Fields Panel"}
                 >
                   <Sidebar className="w-4 h-4" />
                 </Button>
