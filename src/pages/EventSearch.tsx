@@ -38,7 +38,7 @@ import {
   GET_INDICES,
   GET_FIELD_BY_PATTERN,
   GET_EVENT_HISTOGRAM,
-} from "../constants/eventSearchEndpoints";
+} from "../endpoints/eventSearchEndpoints";
 
 import { http } from "../data/config";
 import { toast } from "sonner";
@@ -114,7 +114,7 @@ function useGetPaginatedLogs(
     hasPrev: false,
     hasNext: false,
     count: 0,
-    startTime: "", // <—
+    startTime: "",
     endTime: "",
     ...(source_includes_csv ? { source_includes: source_includes_csv } : {}),
   });

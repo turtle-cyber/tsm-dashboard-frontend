@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import type { EventData } from "@/data/mockEventData";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { http } from "../../data/config";
-import { GET_LOGS_BY_INDEX } from "@/constants/eventSearchEndpoints";
+import { GET_LOGS_BY_INDEX } from "@/endpoints/eventSearchEndpoints";
 import { formatTimestamp } from "@/lib/helpers";
 
 type DocRef = { indexName: string; id: string };

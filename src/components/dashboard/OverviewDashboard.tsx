@@ -1,43 +1,70 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SeverityBadge } from "@/components/ui/severity-badge";
-import { DonutChart } from "@/components/charts/DonutChart";
-import { LineChart } from "@/components/charts/LineChart";
-import { Badge } from "@/components/ui/badge";
-import { MalwareKPICard } from "./MalwareKPICard";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Crown, Copy, AlertTriangle, AlertCircle, Users } from "lucide-react";
-import {
-  severityData,
-  classificationData,
-  alertsOverTimeData,
-  alertsTimeLineConfig,
-  highValueAssetsData,
-  agentsAttentionData,
-} from "@/data/mockData";
+import { MalwareKPICard } from "./Components/MalwareKPICard";
 
-const getRiskIcon = (iconName: string) => {
-  switch (iconName) {
-    case "crown":
-      return <Crown className="h-4 w-4 text-high" />;
-    case "copy":
-      return <Copy className="h-4 w-4 text-medium" />;
-    case "warning":
-      return <AlertTriangle className="h-4 w-4 text-high" />;
-    case "alert-circle":
-      return <AlertCircle className="h-4 w-4 text-critical" />;
-    case "users":
-      return <Users className="h-4 w-4 text-medium" />;
-    default:
-      return null;
-  }
-};
+import {
+  Crown,
+  Copy,
+  AlertTriangle,
+  AlertCircle,
+  Users,
+  FileIcon,
+} from "lucide-react";
+import { classificationData, agentsAttentionData } from "@/data/mockData";
+import EventCard from "./Components/EventCard";
+import OverallMalwareCard from "./Components/OverallMalwareCard";
+import { LineChart } from "../charts/LineChart";
+import { useCallback, useEffect, useState } from "react";
+import { GET_ALERT_COUNT } from "@/endpoints/dashboardEndpoints";
+import { http } from "@/data/config";
+
+const mockData = [
+  { date: "8 May", critical: 49 },
+  { date: "9 May", critical: 65 },
+  { date: "10 May", critical: 52 },
+  { date: "11 May", critical: 90 },
+  { date: "12 May", critical: 70 },
+  { date: "13 May", critical: 80 },
+];
+
+const lineConfigs = [
+  {
+    dataKey: "critical",
+    color: "#ef4444", // Tailwind red-500
+    name: "Critical Alerts",
+    strokeWidth: 2,
+  },
+  {
+    dataKey: "high",
+    color: "#f59e0b", // Tailwind amber-500
+    name: "High Alerts",
+    strokeWidth: 2,
+  },
+];
+
+// Custom API Hooks
+function useGetAlertCount() {
+  const [cardData, setCardData] = useState<any>([]);
+  const [cardsLoading, setCardsLoading] = useState(false);
+
+  const fetchAlertCount = useCallback(async () => {
+    setCardsLoading(true);
+    try {
+      const response = await http.get(GET_ALERT_COUNT);
+      console.log("Response from GET_ALERT_COUNT:", response);
+      setCardData(response?.data?.data || []);
+    } catch (error) {
+      console.error("Error fetching alert count:", error);
+    } finally {
+      setCardsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAlertCount();
+  }, []);
+
+  return { cardData, cardsLoading, refetch: fetchAlertCount };
+}
 
 export function OverviewDashboard() {
   // Prepare classification data with percentages
@@ -52,169 +79,82 @@ export function OverviewDashboard() {
     percentage: item.value,
   }));
 
+  // Get the alert count data from the API
+  const { cardData, cardsLoading } = useGetAlertCount();
+
   return (
-    <div className="space-y-6">
-      {/* First Row - 3 Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Alerts by Severity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Alerts by Severity
-            </CardTitle>
+    <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch">
+      {/*  */}
+      <section className="grid gap-4 grid-rows-[auto_1fr]">
+        {/* Row 1: four event cards */}
+        <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
+          {console.log("Card Data:", cardData)}
+          {cardData.map((index) => (
+            <EventCard
+              title={index?.key}
+              count={index?.count}
+              percentage={index?.percentage}
+              variant={index?.key.toLowerCase() || "high"}
+            />
+          ))}
+        </div>
+
+        {/* Row 2: Malware Detection panel (fills remaining height on the left) */}
+        <Card className="h-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Malware Detection</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {severityData.map((item) => (
-                <div
-                  key={item.severity}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <SeverityBadge
-                      severity={item.severity.toLowerCase() as any}
-                    >
-                      {item.severity}
-                    </SeverityBadge>
-                  </div>
-                  <span className="text-sm font-medium text-primary">
-                    {item.count.toLocaleString()}
-                  </span>
-                </div>
-              ))}
+          <CardContent className="pt-0">
+            <div className="grid gap-4 md:grid-cols-2 mb-3">
+              {/* Third Row - Malware KPI Cards */}
+              <MalwareKPICard
+                title="Fileless Malware Count"
+                count={127}
+                subtitle="Last 7 Days"
+                icon={<FileIcon className="h-6 w-6 text-red-500" />}
+              />
+              <MalwareKPICard
+                title="File-Based Malware Count"
+                count={89}
+                subtitle="Last 7 Days"
+                icon={<Copy className="h-6 w-6 text-red-500" />}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <OverallMalwareCard />
             </div>
           </CardContent>
         </Card>
+      </section>
 
-        {/* Alerts by Classification */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Alerts by Classification
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DonutChart
-              chartHeight={300}
-              data={classificationDataWithPercentages}
-              innerRadius={50}
-              outerRadius={80}
-              showLegend={true}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Critical and High Alerts Over Time */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
+      {/* RIGHT: full height chart */}
+      <section className="h-full">
+        <Card className="h-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
               Critical and High Alerts Created Over Time
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <LineChart
-              data={alertsOverTimeData}
-              lines={alertsTimeLineConfig}
-              xAxisKey="time"
-              height={200}
-              showLegend={false}
-            />
+          <CardContent className="pt-2 h-full">
+            <div className="h-[300px] md:h-[420px] lg:h-full w-full">
+              <LineChart
+                data={mockData}
+                chartType="linear"
+                lines={lineConfigs}
+                xAxisKey="date"
+                height={350}
+                showGrid={true}
+                showLegend={true}
+                showTooltip={true}
+              />
+            </div>
           </CardContent>
         </Card>
-      </div>
+      </section>
 
       {/* Second Row - 2 Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top High-Value Assets With Alerts */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Top High-Value Assets With Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Asset Name</TableHead>
-                  <TableHead>Unresolved Alerts</TableHead>
-                  <TableHead>Risk Factors</TableHead>
-                  <TableHead>Category</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {highValueAssetsData.map((asset, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                          <span className="text-xs font-medium text-primary">
-                            {asset.assetName.charAt(0)}
-                          </span>
-                        </div>
-                        <span className="font-medium">{asset.assetName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="bg-muted/50">
-                        {asset.unresolvedAlerts}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        {asset.riskFactors.map((icon, iconIndex) => (
-                          <div key={iconIndex}>{getRiskIcon(icon)}</div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{asset.category}</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Agents Requiring Attention */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Agents Requiring Attention
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DonutChart
-              data={agentsDataWithPercentages}
-              innerRadius={50}
-              outerRadius={80}
-              showLegend={true}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Third Row - Malware KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <MalwareKPICard
-          title="Fileless Malware Count"
-          count={127}
-          subtitle="Last 7 Days"
-          ariaLabel="Fileless malware count"
-          trend={[12, 8, 15, 22, 18, 25, 20]}
-        />
-        <MalwareKPICard
-          title="File-Based Malware Count"
-          count={89}
-          subtitle="Last 7 Days"
-          ariaLabel="File-based malware count"
-          trend={[10, 15, 8, 12, 20, 16, 14]}
-        />
       </div>
     </div>
   );
