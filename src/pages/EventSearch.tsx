@@ -40,7 +40,7 @@ import {
   GET_EVENT_HISTOGRAM,
 } from "../endpoints/eventSearchEndpoints";
 
-import { http } from "../data/config";
+import { http } from "../lib/config";
 import { toast } from "sonner";
 import {
   SkeletonTableRows,
