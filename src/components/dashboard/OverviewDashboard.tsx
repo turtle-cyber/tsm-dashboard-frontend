@@ -12,34 +12,20 @@ import {
 import { classificationData, agentsAttentionData } from "@/data/mockData";
 import EventCard from "./Components/EventCard";
 import OverallMalwareCard from "./Components/OverallMalwareCard";
-import { LineChart } from "../charts/LineChart";
 import { useCallback, useEffect, useState } from "react";
-import { GET_ALERT_COUNT } from "@/endpoints/dashboardEndpoints";
+import {
+  GET_ALERT_COUNT,
+  GET_ALERT_TRENDS,
+} from "@/endpoints/dashboardEndpoints";
 import { http } from "@/data/config";
-
-const mockData = [
-  { date: "8 May", critical: 49 },
-  { date: "9 May", critical: 65 },
-  { date: "10 May", critical: 52 },
-  { date: "11 May", critical: 90 },
-  { date: "12 May", critical: 70 },
-  { date: "13 May", critical: 80 },
-];
-
-const lineConfigs = [
-  {
-    dataKey: "critical",
-    color: "#ef4444", // Tailwind red-500
-    name: "Critical Alerts",
-    strokeWidth: 2,
-  },
-  {
-    dataKey: "high",
-    color: "#f59e0b", // Tailwind amber-500
-    name: "High Alerts",
-    strokeWidth: 2,
-  },
-];
+import AlertsLineChart from "./Components/AlertsLineChart";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
 
 // Custom API Hooks
 function useGetAlertCount() {
@@ -50,7 +36,6 @@ function useGetAlertCount() {
     setCardsLoading(true);
     try {
       const response = await http.get(GET_ALERT_COUNT);
-      console.log("Response from GET_ALERT_COUNT:", response);
       setCardData(response?.data?.data || []);
     } catch (error) {
       console.error("Error fetching alert count:", error);
@@ -66,21 +51,41 @@ function useGetAlertCount() {
   return { cardData, cardsLoading, refetch: fetchAlertCount };
 }
 
-export function OverviewDashboard() {
-  // Prepare classification data with percentages
-  const classificationDataWithPercentages = classificationData.map((item) => ({
-    ...item,
-    percentage: item.value,
-  }));
+function useGetAlertTrends(severity: string = "high") {
+  const [trendsData, setTrendsData] = useState<any>([]);
+  const [trendsLoading, setTrendsLoading] = useState(false);
 
-  // Prepare agents attention data with percentages
-  const agentsDataWithPercentages = agentsAttentionData.map((item) => ({
-    ...item,
-    percentage: item.value,
-  }));
+  const fetchAlertTrends = useCallback(async () => {
+    setTrendsLoading(true);
+    try {
+      const response = await http.get(GET_ALERT_TRENDS, {
+        params: { pattern: "wazuh-alerts*", severity: severity },
+      });
+
+      setTrendsData(response?.data?.data || []);
+    } catch (error) {
+      console.error("Error fetching alert trends:", error);
+    } finally {
+      setTrendsLoading(false);
+    }
+  }, [severity]);
+
+  useEffect(() => {
+    fetchAlertTrends();
+  }, [severity]);
+
+  return { trendsData, trendsLoading, refetch: fetchAlertTrends };
+}
+
+export function OverviewDashboard() {
+  //Local States
+  const [selectedSeverity, setSelectedSeverity] = useState("High");
+
+  const severities = ["Critical", "High", "Medium", "Low"];
 
   // Get the alert count data from the API
   const { cardData, cardsLoading } = useGetAlertCount();
+  const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch">
@@ -88,8 +93,7 @@ export function OverviewDashboard() {
       <section className="grid gap-4 grid-rows-[auto_1fr]">
         {/* Row 1: four event cards */}
         <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
-          {console.log("Card Data:", cardData)}
-          {cardData.map((index) => (
+          {cardData.map((index: any) => (
             <EventCard
               title={index?.key}
               count={index?.count}
@@ -110,13 +114,13 @@ export function OverviewDashboard() {
               <MalwareKPICard
                 title="Fileless Malware Count"
                 count={127}
-                subtitle="Last 7 Days"
+                subtitle="Blocks harmful files hidden in downloads, attachments, and scripts"
                 icon={<FileIcon className="h-6 w-6 text-red-500" />}
               />
               <MalwareKPICard
                 title="File-Based Malware Count"
                 count={89}
-                subtitle="Last 7 Days"
+                subtitle="Stops attacks that run directly in memory or systen processes."
                 icon={<Copy className="h-6 w-6 text-red-500" />}
               />
             </div>
@@ -130,32 +134,45 @@ export function OverviewDashboard() {
       {/* RIGHT: full height chart */}
       <section className="h-full">
         <Card className="h-full">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 justify-between flex items-center">
             <CardTitle className="text-base">
-              Critical and High Alerts Created Over Time
+              Alerts Created Over Last Week
             </CardTitle>
+            {/* Severity Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-28 rounded-lg text-sm font-medium"
+                >
+                  {selectedSeverity}
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="center"
+                sideOffset={5}
+                className="animate-in fade-in-80 slide-in-from-top-2 duration-300"
+              >
+                {severities.map((severity) => (
+                  <DropdownMenuItem
+                    key={severity}
+                    onClick={() => setSelectedSeverity(severity)}
+                  >
+                    {severity}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
-          <CardContent className="pt-2 h-full">
+          <CardContent className="pt-4 h-full">
             <div className="h-[300px] md:h-[420px] lg:h-full w-full">
-              <LineChart
-                data={mockData}
-                chartType="linear"
-                lines={lineConfigs}
-                xAxisKey="date"
-                height={350}
-                showGrid={true}
-                showLegend={true}
-                showTooltip={true}
-              />
+              <AlertsLineChart data={trendsData} />
             </div>
           </CardContent>
         </Card>
       </section>
-
-      {/* Second Row - 2 Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top High-Value Assets With Alerts */}
-      </div>
     </div>
   );
 }
