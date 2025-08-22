@@ -9,10 +9,14 @@ import {
 } from "recharts";
 
 type LegendPosition = "left" | "right" | "top" | "bottom";
-type DonutDatum = { label: string; value: number };
 
-type DonutChartProps = {
-  data: DonutDatum[];
+// Accessors let the chart work with any data shape
+type DonutChartProps<T = any> = {
+  data: T[];
+  getLabel?: (d: T) => string;
+  getValue?: (d: T) => number;
+  getColor?: (d: T, index: number) => string;
+
   innerRadius?: number;
   outerRadius?: number;
   showLegend?: boolean;
@@ -21,7 +25,7 @@ type DonutChartProps = {
   legendPosition?: LegendPosition;
 };
 
-const COLORS = [
+const DEFAULT_COLORS = [
   "#f87171",
   "#fb923c",
   "#facc15",
@@ -49,7 +53,6 @@ function rgbToHex({ r, g, b }: { r: number; g: number; b: number }) {
   const f = (n: number) => n.toString(16).padStart(2, "0");
   return `#${f(r)}${f(g)}${f(b)}`;
 }
-/** blend a color towards white by factor 0..1 */
 function fadeToWhite(hex: string, factor: number) {
   const { r, g, b } = hexToRgb(hex);
   return rgbToHex({
@@ -116,32 +119,58 @@ const CustomTooltip = ({
   return null;
 };
 
-export function DonutChart({
+/** Center label ("Total" and number) */
+const renderCenterLabel = (total: number) => (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+      <tspan x={cx} dy="-0.4em" className="text-xs fill-muted-foreground">
+        Total
+      </tspan>
+      <tspan
+        x={cx}
+        dy="1.2em"
+        className="text-md font-bold fill-card-foreground"
+      >
+        {total}
+      </tspan>
+    </text>
+  );
+};
+
+export function DonutChart<T = any>({
   data,
+  getLabel = (d: any) => d?.alert ?? String(d?.name ?? d?.id ?? ""),
+  getValue = (d: any) => Number(d?.value ?? d?.count ?? 0),
+  getColor = (_: T, i: number) => DEFAULT_COLORS[i % DEFAULT_COLORS.length],
+
   innerRadius = 60,
   outerRadius = 120,
   showLegend = true,
   showTooltip = true,
   chartHeight = 250,
   legendPosition = "right",
-}: DonutChartProps) {
+}: DonutChartProps<T>) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [selected, setSelected] = useState<number[]>([]); // multi-select lock
 
+  const values = useMemo(() => data.map(getValue), [data, getValue]);
+  const labels = useMemo(() => data.map(getLabel), [data, getLabel]);
+
   const total = useMemo(
-    () => data.reduce((acc, item) => acc + Number(item.value || 0), 0),
-    [data]
+    () => values.reduce((acc, v) => acc + Number(v || 0), 0),
+    [values]
   );
 
   const chartData = useMemo(
     () =>
-      data.map((item, i) => ({
-        name: item.label,
-        value: item.value,
-        color: COLORS[i % COLORS.length],
-        percentage: total > 0 ? (item.value / total) * 100 : 0,
+      data.map((d, i) => ({
+        name: labels[i],
+        value: values[i],
+        color: getColor(d, i),
+        percentage: total > 0 ? (values[i] / total) * 100 : 0,
       })),
-    [data, total]
+    [data, labels, values, total, getColor]
   );
 
   // active indices = union(selected, hovered)
@@ -166,7 +195,7 @@ export function DonutChart({
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
 
-  const fadeFactor = 0.45; // less white than before
+  const fadeFactor = 0.45; // how much to blend to white when de-emphasized
 
   const LegendBox = (
     <div className="min-w-[200px]">
@@ -226,6 +255,7 @@ export function DonutChart({
             onMouseLeave={() => setHoverIndex(null)}
             onMouseEnter={(_, idx) => setHoverIndex(idx)}
             onClick={(_, idx) => toggleSelect(idx)}
+            label={renderCenterLabel(total)} // center Total
           >
             {chartData.map((entry, index) => {
               const isActive =

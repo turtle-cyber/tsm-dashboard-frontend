@@ -76,3 +76,21 @@ export function resolveNowRelativeToISO(rel: string, now = new Date()): string {
 export type CanonicalRange =
   | { mode: "relative"; from: string; to: string } // e.g. now-24h -> now
   | { mode: "absolute"; from: string; to: string }; // ISO strings
+
+// Indian + short (K/L/Cr) formatter
+export function toFixedTrim(n: number, frac = 1) {
+  return n.toFixed(frac).replace(/\.0+$|(?<=\.\d*?)0+$/g, "");
+}
+
+export function formatFullIN(value: number) {
+  return new Intl.NumberFormat("en-IN").format(value);
+}
+
+export function formatAbbrevIN(value: number): string {
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1e7) return `${sign}${toFixedTrim(abs / 1e7)} Cr`;
+  if (abs >= 1e5) return `${sign}${toFixedTrim(abs / 1e5)} L`;
+  if (abs >= 1e3) return `${sign}${toFixedTrim(abs / 1e3)} K`;
+  return `${sign}${formatFullIN(abs)}`;
+}
