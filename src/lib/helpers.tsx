@@ -2,6 +2,11 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -93,4 +98,33 @@ export function formatAbbrevIN(value: number): string {
   if (abs >= 1e5) return `${sign}${toFixedTrim(abs / 1e5)} L`;
   if (abs >= 1e3) return `${sign}${toFixedTrim(abs / 1e3)} K`;
   return `${sign}${formatFullIN(abs)}`;
+}
+
+interface TruncTextProps {
+  value?: string | number;
+  maxWidth?: string; // e.g. "max-w-[140px]"
+  className?: string;
+  side?: "top" | "right" | "bottom" | "left"; // optional for tooltip position
+}
+
+export function TruncText({
+  value,
+  maxWidth = "max-w-[140px]",
+  className = "",
+  side = "top",
+}: TruncTextProps) {
+  const text = value?.toString() ?? "—";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={`truncate ${maxWidth} whitespace-nowrap overflow-hidden ${className}`}
+        >
+          {text}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side={side}>{text}</TooltipContent>
+    </Tooltip>
+  );
 }

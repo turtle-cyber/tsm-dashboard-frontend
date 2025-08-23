@@ -26,8 +26,8 @@ type DonutChartProps<T = any> = {
 };
 
 const DEFAULT_COLORS = [
-  "#f87171",
-  "#fb923c",
+  "#a465ce",
+  "#5c3e77",
   "#facc15",
   "#34d399",
   "#60a5fa",

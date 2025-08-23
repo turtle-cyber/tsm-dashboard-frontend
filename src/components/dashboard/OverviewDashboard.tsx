@@ -1,21 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MalwareKPICard } from "./Components/MalwareKPICard";
 
-import {
-  Crown,
-  Copy,
-  AlertTriangle,
-  AlertCircle,
-  Users,
-  FileIcon,
-} from "lucide-react";
-import { classificationData, agentsAttentionData } from "@/data/mockData";
+import { Copy, FileIcon, Monitor } from "lucide-react";
 import EventCard from "./Components/EventCard";
 import OverallMalwareCard from "./Components/OverallMalwareCard";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   GET_ALERT_COUNT,
   GET_ALERT_TRENDS,
+  GET_AGENTS,
   GET_TOP_ALERTS,
 } from "@/endpoints/dashboardEndpoints";
 import { http } from "@/lib/config";
@@ -29,6 +22,20 @@ import {
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { DonutChart } from "../charts/DonutChart";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { Badge } from "../ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { FaWindows, FaLinux } from "react-icons/fa";
+import { TruncText } from "@/lib/helpers";
+import ConfidenceGauge from "./Components/ConfidenceGauge";
 
 // Custom API Hooks
 function useGetAlertCount() {
@@ -90,7 +97,6 @@ function useGetTopAlerts() {
     try {
       const response = await http.get(GET_TOP_ALERTS);
       setTopAlertsData(response?.data?.data || []);
-      console.log("Top Alerts Data:", topAlertsData);
     } catch (error) {
       console.error("Error fetching top alerts:", error);
     } finally {
@@ -105,22 +111,82 @@ function useGetTopAlerts() {
   return { topAlertsData, alertsLoading, refetch: fetchTopAlerts };
 }
 
-const donutData = [
-  { label: "Apples", value: 470 },
-  { label: "Oranges", value: 300 },
-  { label: "Bananas", value: 300 },
-  { label: "Grapes", value: 200 },
-  { label: "Pears", value: 100 },
-];
+const useGetAgents = () => {
+  const [agentsData, setAgentsData] = useState<any>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
 
-// Calculate percentages dynamically
-const total = donutData.reduce((acc, item) => acc + item.value, 0);
-const donutDataWithPercentage = donutData.map((item) => ({
-  ...item,
-  percentage: (item.value / total) * 100,
-}));
+  const fetchAgents = useCallback(async () => {
+    setAgentsLoading(true);
+    try {
+      const response = await http.get(GET_AGENTS);
 
-export default donutDataWithPercentage;
+      setAgentsData(response.data?.data || []);
+    } catch (error) {
+      console.error("Error fetching top agents:", error);
+    } finally {
+      setAgentsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  return { agentsData, agentsLoading, refetch: fetchAgents };
+};
+
+const UNRESOLVED_BY_AGENT: Record<string, number> = {
+  "001": 266,
+};
+
+function StatusDot({ status }: { status?: string }) {
+  const s = (status || "").toLowerCase();
+  const color =
+    s === "active"
+      ? "bg-green-500"
+      : s === "disconnected" || s === "inactive"
+      ? "bg-red-500"
+      : "bg-zinc-400";
+  const label =
+    s === "active"
+      ? "Active"
+      : s === "disconnected" || s === "inactive"
+      ? "Inactive"
+      : "Unknown";
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <span
+        className={`inline-block h-2.5 w-2.5 rounded-full ${color}`}
+        aria-hidden="true"
+      />
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function OSIcon({ os }: { os: string }) {
+  const lower = (os || "").toLowerCase();
+  const isWindows = lower.includes("win");
+  const isLinux =
+    lower.includes("linux") ||
+    lower.includes("ubuntu") ||
+    lower.includes("debian") ||
+    lower.includes("centos") ||
+    lower.includes("red hat") ||
+    lower.includes("rhel") ||
+    lower.includes("fedora");
+
+  if (isWindows)
+    return <FaWindows className="h-4 w-4 text-sky-400" aria-label="Windows" />;
+  if (isLinux)
+    return <FaLinux className="h-4 w-4 text-zinc-300" aria-label="Linux" />;
+  return (
+    <Monitor
+      className="h-4 w-4 text-muted-foreground"
+      aria-label="Unknown OS"
+    />
+  );
+}
 
 export function OverviewDashboard() {
   //Local States
@@ -132,6 +198,23 @@ export function OverviewDashboard() {
   const { cardData, cardsLoading } = useGetAlertCount();
   const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
   const { topAlertsData, alertsLoading } = useGetTopAlerts();
+  const { agentsData, agentsLoading } = useGetAgents();
+
+  const rows = useMemo(() => {
+    // Map API agents to table rows and merge unresolved from static map
+    const mapped = (agentsData || []).map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      ip: a.ip,
+      os: a.os_name,
+      category: Array.isArray(a.group) && a.group.length ? a.group[0] : "—",
+      status: a.status,
+      unresolved: UNRESOLVED_BY_AGENT[a.id] ?? 0,
+    }));
+    // Sort by unresolved desc
+    mapped.sort((a, b) => b.unresolved - a.unresolved);
+    return mapped;
+  }, [agentsData]);
 
   return (
     <>
@@ -236,8 +319,104 @@ export function OverviewDashboard() {
             />
           </CardContent>
         </Card>
-        <Card className="" />
-        <Card className="" />
+        <Card>
+          <CardHeader className="pb-2 flex items-center justify-between">
+            <CardTitle className="text-base">
+              Top High Value Targets With Unresolved Alerts
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <TooltipProvider delayDuration={150}>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/60">
+                    <TableHead className="w-[10%] text-xs">
+                      Agent Name
+                    </TableHead>
+                    <TableHead className="w-[10%] text-xs">
+                      Unresolved
+                    </TableHead>
+                    <TableHead className="w-[12%] text-xs">Category</TableHead>
+                    <TableHead className="w-[15%] text-xs">Agent IP</TableHead>
+                    <TableHead className="w-[10%] text-center text-xs">
+                      OS
+                    </TableHead>
+                    <TableHead className="w-[13%] text-center text-xs">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody className="text-xs">
+                  {rows.map((row: any) => (
+                    <TableRow
+                      key={row.id}
+                      className="border-border/60 hover:bg-muted/30 transition-colors"
+                    >
+                      {/* Agent Name (truncate + tooltip) */}
+                      <TableCell>
+                        <TruncText value={row.name} maxWidth="max-w-[160px]" />
+                      </TableCell>
+
+                      {/* Unresolved (numeric, keep compact) */}
+                      <TableCell className="tabular-nums">
+                        {row.unresolved.toLocaleString()}
+                      </TableCell>
+
+                      {/* Category (truncate + tooltip in a badge) */}
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="px-1 py-0.5 rounded-md"
+                        >
+                          <TruncText
+                            value={row.category}
+                            maxWidth="max-w-[120px]"
+                          />
+                        </Badge>
+                      </TableCell>
+
+                      {/* Agent IP (truncate + tooltip, tabular) */}
+                      <TableCell className="tabular-nums">
+                        <TruncText value={row.ip} maxWidth="max-w-[140px]" />
+                      </TableCell>
+
+                      {/* OS (icon + tooltip already) */}
+                      <TableCell className="text-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted/20">
+                              <OSIcon os={row.os} />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {row.os || "Unknown"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+
+                      {/* Status (centered dot + label) */}
+                      <TableCell className="text-center">
+                        <StatusDot status={row.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
+          </CardContent>
+        </Card>
+        <Card className="">
+          <CardHeader className="pb-2 flex items-center justify-between">
+            <CardTitle className="text-base">
+              Confidence Score For Fileless Malware
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ConfidenceGauge />
+          </CardContent>
+        </Card>
       </div>
     </>
   );
