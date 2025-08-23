@@ -36,6 +36,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { FaWindows, FaLinux } from "react-icons/fa";
 import { TruncText } from "@/lib/helpers";
 import ConfidenceGauge from "./Components/ConfidenceGauge";
+import MethodologyFlow from "./Components/FlowMethodology";
 
 // Custom API Hooks
 function useGetAlertCount() {
@@ -415,6 +416,18 @@ export function OverviewDashboard() {
           </CardHeader>
           <CardContent>
             <ConfidenceGauge />
+          </CardContent>
+        </Card>
+
+        {/* Kill chain card */}
+        <Card className="col-span-full hover:bg-card/50 transition">
+          <CardHeader className="pb-2 justify-between flex items-center">
+            <CardTitle className="text-base">
+              Fileless Malware Detection Methodology
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MethodologyFlow />
           </CardContent>
         </Card>
       </div>
