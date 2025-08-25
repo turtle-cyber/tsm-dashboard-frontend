@@ -420,7 +420,7 @@ export function OverviewDashboard() {
         </Card>
 
         {/* Kill chain card */}
-        <Card className="col-span-full hover:bg-card/50 transition">
+        <Card className="col-span-full hover:bg-card/50 transition cursor-pointer">
           <CardHeader className="pb-2 justify-between flex items-center">
             <CardTitle className="text-base">
               Fileless Malware Detection Methodology

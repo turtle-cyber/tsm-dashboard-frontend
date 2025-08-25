@@ -195,7 +195,7 @@ export function DonutChart<T = any>({
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
 
-  const fadeFactor = 0.45; // how much to blend to white when de-emphasized
+  const fadeFactor = 0.45;
 
   const LegendBox = (
     <div className="min-w-[200px]">
@@ -252,8 +252,8 @@ export function DonutChart<T = any>({
             animationEasing="ease-out"
             activeIndex={activeIndex} // supports number[]
             activeShape={renderActiveShape}
-            onMouseLeave={() => setHoverIndex(null)}
-            onMouseEnter={(_, idx) => setHoverIndex(idx)}
+            // onMouseLeave={() => setHoverIndex(null)}
+            // onMouseEnter={(_, idx) => setHoverIndex(idx)}
             onClick={(_, idx) => toggleSelect(idx)}
             label={renderCenterLabel(total)} // center Total
           >

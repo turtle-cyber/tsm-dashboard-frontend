@@ -4,6 +4,9 @@ import {
   RadialBar,
   RadialBarChart,
   ResponsiveContainer,
+  PolarRadiusAxis,
+  Label,
+  Customized,
 } from "recharts";
 
 type Contributor = { label: string; value: number; color: string };
@@ -62,13 +65,45 @@ const ConfidenceGauge: React.FC = () => {
             <RadialBarChart
               data={chartData}
               cx="50%"
-              cy="80%" // center at bottom for a clean semicircle
-              innerRadius="120" // % keeps it responsive
+              cy="80%"
+              innerRadius="110" // % keeps it responsive
               outerRadius="150"
               startAngle={180}
               endAngle={0}
             >
               <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+
+              <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy - 50}
+                            className="fill-muted-foreground"
+                          >
+                            Confidence
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy - 15}
+                            className="fill-foreground text-4xl font-bold"
+                          >
+                            {chartData[0].value}%
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+              </PolarRadiusAxis>
               <RadialBar
                 dataKey="value"
                 fill="#6366f1"
