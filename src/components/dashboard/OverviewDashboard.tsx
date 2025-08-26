@@ -151,8 +151,8 @@ function StatusDot({ status }: { status?: string }) {
   const label =
     s === "active"
       ? "Active"
-      : s === "disconnected" || s === "inactive"
-      ? "Inactive"
+      : s === "disconnected"
+      ? "Disconnected"
       : "Unknown";
   return (
     <div className="flex items-center justify-end gap-2">
@@ -313,9 +313,9 @@ export function OverviewDashboard() {
           <CardContent className="">
             <DonutChart
               data={topAlertsData}
-              innerRadius={50}
-              outerRadius={80}
-              chartHeight={200}
+              innerRadius={70}
+              outerRadius={100}
+              chartHeight={250}
               legendPosition="right"
             />
           </CardContent>

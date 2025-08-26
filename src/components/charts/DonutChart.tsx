@@ -242,7 +242,7 @@ export function DonutChart<T = any>({
             cy="50%"
             innerRadius={innerRadius}
             outerRadius={outerRadius}
-            paddingAngle={2}
+            paddingAngle={4}
             dataKey="value"
             startAngle={90} // sweep 0→360
             endAngle={-270}
@@ -252,8 +252,6 @@ export function DonutChart<T = any>({
             animationEasing="ease-out"
             activeIndex={activeIndex} // supports number[]
             activeShape={renderActiveShape}
-            // onMouseLeave={() => setHoverIndex(null)}
-            // onMouseEnter={(_, idx) => setHoverIndex(idx)}
             onClick={(_, idx) => toggleSelect(idx)}
             label={renderCenterLabel(total)} // center Total
           >
@@ -268,6 +266,7 @@ export function DonutChart<T = any>({
                   key={`cell-${index}`}
                   fill={fill}
                   style={{ transition: "fill 200ms cubic-bezier(.2,.8,.2,1)" }}
+                  stroke="none"
                 />
               );
             })}
