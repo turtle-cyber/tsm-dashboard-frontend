@@ -883,7 +883,7 @@ export default function EventSearch() {
                               const v = valueForField(row, f);
                               const s =
                                 typeof v === "string"
-                                  ? truncate(v, 120)
+                                  ? truncate(v, 180)
                                   : typeof v === "number"
                                   ? v
                                   : v == null

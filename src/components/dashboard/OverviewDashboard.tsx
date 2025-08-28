@@ -33,10 +33,9 @@ import {
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Badge } from "../ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { FaWindows, FaLinux } from "react-icons/fa";
+import { FaWindows, FaLinux, FaUbuntu } from "react-icons/fa";
 import { TruncText } from "@/lib/helpers";
 import ConfidenceGauge from "./Components/ConfidenceGauge";
-import MethodologyFlow from "./Components/FlowMethodology";
 
 // Custom API Hooks
 function useGetAlertCount() {
@@ -136,10 +135,6 @@ const useGetAgents = () => {
   return { agentsData, agentsLoading, refetch: fetchAgents };
 };
 
-const UNRESOLVED_BY_AGENT: Record<string, number> = {
-  "001": 266,
-};
-
 function StatusDot({ status }: { status?: string }) {
   const s = (status || "").toLowerCase();
   const color =
@@ -167,10 +162,10 @@ function StatusDot({ status }: { status?: string }) {
 
 function OSIcon({ os }: { os: string }) {
   const lower = (os || "").toLowerCase();
-  const isWindows = lower.includes("win");
+  const isWindows = lower.includes("windows");
+  const isUbuntu = lower.includes("ubuntu");
   const isLinux =
     lower.includes("linux") ||
-    lower.includes("ubuntu") ||
     lower.includes("debian") ||
     lower.includes("centos") ||
     lower.includes("red hat") ||
@@ -179,6 +174,8 @@ function OSIcon({ os }: { os: string }) {
 
   if (isWindows)
     return <FaWindows className="h-4 w-4 text-sky-400" aria-label="Windows" />;
+  if (isUbuntu)
+    return <FaUbuntu className="h-4 w-4 text-orange-400" aria-label="Ubuntu" />;
   if (isLinux)
     return <FaLinux className="h-4 w-4 text-zinc-300" aria-label="Linux" />;
   return (
@@ -200,22 +197,6 @@ export function OverviewDashboard() {
   const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
   const { topAlertsData, alertsLoading } = useGetTopAlerts();
   const { agentsData, agentsLoading } = useGetAgents();
-
-  const rows = useMemo(() => {
-    // Map API agents to table rows and merge unresolved from static map
-    const mapped = (agentsData || []).map((a: any) => ({
-      id: a.id,
-      name: a.name,
-      ip: a.ip,
-      os: a.os_name,
-      category: Array.isArray(a.group) && a.group.length ? a.group[0] : "—",
-      status: a.status,
-      unresolved: UNRESOLVED_BY_AGENT[a.id] ?? 0,
-    }));
-    // Sort by unresolved desc
-    mapped.sort((a, b) => b.unresolved - a.unresolved);
-    return mapped;
-  }, [agentsData]);
 
   return (
     <>
@@ -335,9 +316,7 @@ export function OverviewDashboard() {
                     <TableHead className="w-[10%] text-xs">
                       Agent Name
                     </TableHead>
-                    <TableHead className="w-[10%] text-xs">
-                      Unresolved
-                    </TableHead>
+
                     <TableHead className="w-[12%] text-xs">Category</TableHead>
                     <TableHead className="w-[15%] text-xs">Agent IP</TableHead>
                     <TableHead className="w-[10%] text-center text-xs">
@@ -350,59 +329,66 @@ export function OverviewDashboard() {
                 </TableHeader>
 
                 <TableBody className="text-xs">
-                  {rows.map((row: any) => (
-                    <TableRow
-                      key={row.id}
-                      className="border-border/60 hover:bg-muted/30 transition-colors"
-                    >
-                      {/* Agent Name (truncate + tooltip) */}
-                      <TableCell>
-                        <TruncText value={row.name} maxWidth="max-w-[160px]" />
-                      </TableCell>
-
-                      {/* Unresolved (numeric, keep compact) */}
-                      <TableCell className="tabular-nums">
-                        {row.unresolved.toLocaleString()}
-                      </TableCell>
-
-                      {/* Category (truncate + tooltip in a badge) */}
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="px-1 py-0.5 rounded-md"
-                        >
-                          <TruncText
-                            value={row.category}
-                            maxWidth="max-w-[120px]"
-                          />
-                        </Badge>
-                      </TableCell>
-
-                      {/* Agent IP (truncate + tooltip, tabular) */}
-                      <TableCell className="tabular-nums">
-                        <TruncText value={row.ip} maxWidth="max-w-[140px]" />
-                      </TableCell>
-
-                      {/* OS (icon + tooltip already) */}
-                      <TableCell className="text-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted/20">
-                              <OSIcon os={row.os} />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            {row.os || "Unknown"}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-
-                      {/* Status (centered dot + label) */}
-                      <TableCell className="text-center">
-                        <StatusDot status={row.status} />
+                  {agentsLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6">
+                        Loading…
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : agentsData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6">
+                        No agents found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    agentsData.map((row: any) => (
+                      <TableRow
+                        key={row.id ?? row.name} // fallback key if id not present
+                        className="border-border/60 hover:bg-muted/30 transition-colors"
+                      >
+                        <TableCell>
+                          <TruncText
+                            value={row.name}
+                            maxWidth="max-w-[160px]"
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="px-1 py-0.5 rounded-md"
+                          >
+                            <TruncText
+                              value={row.group}
+                              maxWidth="max-w-[120px]"
+                            />
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell className="tabular-nums">
+                          <TruncText value={row.ip} maxWidth="max-w-[140px]" />
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted/20">
+                                <OSIcon os={row.os_name} />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              {row.os_name || "Unknown"}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                          <StatusDot status={row.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TooltipProvider>
@@ -418,16 +404,31 @@ export function OverviewDashboard() {
             <ConfidenceGauge />
           </CardContent>
         </Card>
-
-        {/* Kill chain card */}
-        <Card className="col-span-full hover:bg-card/50 transition cursor-pointer">
-          <CardHeader className="pb-2 justify-between flex items-center">
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch pt-2">
+        <Card>Hi</Card>
+        <Card>
+          <CardHeader className="pb-2 flex items-center justify-between">
             <CardTitle className="text-base">
               Fileless Malware Detection Methodology
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <MethodologyFlow />
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/60">
+                  <TableHead className="w-[10%] text-xs">Campaign</TableHead>
+                  <TableHead className="w-[15%] text-xs">
+                    MITRE ATT&CK Tactic
+                  </TableHead>
+                  <TableHead className="w-[12%] text-xs">Agent IP</TableHead>
+                  <TableHead className="w-[10%] text-center text-xs">
+                    Malicious Confidence
+                  </TableHead>
+                  <TableHead className="w-[10%] text-xs">Description</TableHead>
+                </TableRow>
+              </TableHeader>
+            </Table>
           </CardContent>
         </Card>
       </div>
