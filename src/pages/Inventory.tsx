@@ -2,60 +2,112 @@ import { useState } from "react";
 import { Download, Settings, HelpCircle, RotateCw, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { mockDevices, securedStateData, deviceReviewData, deviceTypeData, osTypeData, type DeviceData } from "@/data/mockInventoryData";
+import {
+  mockDevices,
+  securedStateData,
+  deviceReviewData,
+  deviceTypeData,
+  osTypeData,
+  type DeviceData,
+} from "@/data/mockInventoryData";
 import { cn } from "@/lib/utils";
 
 const getDeviceIcon = (type: string) => {
   switch (type) {
-    case 'workstation': return '🖥️';
-    case 'server': return '🖥️';
-    case 'smart_home': return '🏠';
-    case 'iot': return '📱';
-    case 'mobile': return '📱';
-    default: return '💻';
+    case "workstation":
+      return "🖥️";
+    case "server":
+      return "🖥️";
+    case "smart_home":
+      return "🏠";
+    case "iot":
+      return "📱";
+    case "mobile":
+      return "📱";
+    default:
+      return "💻";
   }
 };
 
 const getOSIcon = (osType: string) => {
   switch (osType) {
-    case 'windows': return '🟦';
-    case 'linux': return '🐧';
-    case 'macos': return '🍎';
-    case 'android': return '🤖';
-    case 'embedded': return '⚡';
-    default: return '❓';
+    case "windows":
+      return "🟦";
+    case "linux":
+      return "🐧";
+    case "macos":
+      return "🍎";
+    case "android":
+      return "🤖";
+    case "embedded":
+      return "⚡";
+    default:
+      return "❓";
   }
 };
 
 const getSecurityStateColor = (state: string) => {
   switch (state) {
-    case 'secured': return 'text-green-400 bg-green-400/10';
-    case 'unsupported': return 'text-yellow-400 bg-yellow-400/10';
-    case 'unsecured': return 'text-red-400 bg-red-400/10';
-    default: return 'text-muted-foreground bg-muted/10';
+    case "secured":
+      return "text-green-400 bg-green-400/10";
+    case "unsupported":
+      return "text-yellow-400 bg-yellow-400/10";
+    case "unsecured":
+      return "text-red-400 bg-red-400/10";
+    default:
+      return "text-muted-foreground bg-muted/10";
   }
 };
 
 const securedStateChartData = [
-  { name: "Secured", value: securedStateData.secured, color: "hsl(var(--chart-1))", percentage: (securedStateData.secured / securedStateData.total) * 100 },
-  { name: "Unsupported", value: securedStateData.unsupported, color: "hsl(var(--chart-3))", percentage: (securedStateData.unsupported / securedStateData.total) * 100 },
-  { name: "Unsecured", value: securedStateData.unsecured, color: "hsl(var(--chart-2))", percentage: (securedStateData.unsecured / securedStateData.total) * 100 }
+  {
+    name: "Secured",
+    value: securedStateData.secured,
+    color: "hsl(var(--chart-1))",
+    percentage: (securedStateData.secured / securedStateData.total) * 100,
+  },
+  {
+    name: "Unsupported",
+    value: securedStateData.unsupported,
+    color: "hsl(var(--chart-3))",
+    percentage: (securedStateData.unsupported / securedStateData.total) * 100,
+  },
+  {
+    name: "Unsecured",
+    value: securedStateData.unsecured,
+    color: "hsl(var(--chart-2))",
+    percentage: (securedStateData.unsecured / securedStateData.total) * 100,
+  },
 ];
 
 export default function Inventory() {
   const [sortBy, setSortBy] = useState("latest");
   const [filterValue, setFilterValue] = useState("");
 
-  const filteredDevices = mockDevices.filter(device =>
-    device.hostName.toLowerCase().includes(filterValue.toLowerCase()) ||
-    device.ip.includes(filterValue) ||
-    device.manufacturer.toLowerCase().includes(filterValue.toLowerCase())
+  const filteredDevices = mockDevices.filter(
+    (device) =>
+      device.hostName.toLowerCase().includes(filterValue.toLowerCase()) ||
+      device.ip.includes(filterValue) ||
+      device.manufacturer.toLowerCase().includes(filterValue.toLowerCase())
   );
 
   return (
@@ -98,7 +150,7 @@ export default function Inventory() {
               outerRadius={70}
               centerText={{
                 line1: "TOTAL:",
-                line2: securedStateData.total.toString()
+                line2: securedStateData.total.toString(),
               }}
               showLegend={false}
             />
@@ -115,14 +167,18 @@ export default function Inventory() {
                   <div className="w-3 h-3 rounded-full bg-chart-3"></div>
                   <span>Unsupported</span>
                 </div>
-                <span className="font-medium">{securedStateData.unsupported}</span>
+                <span className="font-medium">
+                  {securedStateData.unsupported}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-chart-2"></div>
                   <span>Unsecured</span>
                 </div>
-                <span className="font-medium">{securedStateData.unsecured}</span>
+                <span className="font-medium">
+                  {securedStateData.unsecured}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -137,12 +193,15 @@ export default function Inventory() {
           </CardHeader>
           <CardContent>
             <DonutChart
-              data={deviceReviewData.map(item => ({ ...item, percentage: (item.value / 35) * 100 }))}
+              data={deviceReviewData.map((item) => ({
+                ...item,
+                percentage: (item.value / 35) * 100,
+              }))}
               innerRadius={40}
               outerRadius={70}
               centerText={{
                 line1: "TOTAL:",
-                line2: "35"
+                line2: "35",
               }}
               showLegend={false}
             />
@@ -158,7 +217,10 @@ export default function Inventory() {
           </CardHeader>
           <CardContent>
             <DonutChart
-              data={deviceTypeData.map(item => ({ ...item, percentage: (item.value / 35) * 100 }))}
+              data={deviceTypeData.map((item) => ({
+                ...item,
+                percentage: (item.value / 35) * 100,
+              }))}
               innerRadius={40}
               outerRadius={70}
               showLegend={false}
@@ -175,7 +237,10 @@ export default function Inventory() {
           </CardHeader>
           <CardContent>
             <DonutChart
-              data={osTypeData.map(item => ({ ...item, percentage: (item.value / 35) * 100 }))}
+              data={osTypeData.map((item) => ({
+                ...item,
+                percentage: (item.value / 35) * 100,
+              }))}
               innerRadius={40}
               outerRadius={70}
               showLegend={false}
@@ -189,7 +254,9 @@ export default function Inventory() {
         <RotateCw className="h-4 w-4" />
         <AlertDescription>
           <div className="flex items-center justify-between">
-            <span>Scanning Network... Latest scan finished at Aug 9, 2023 21:43</span>
+            <span>
+              Scanning Network... Latest scan finished at Aug 9, 2023 21:43
+            </span>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">35 Items</span>
               <span className="text-sm text-muted-foreground">20 Results</span>
@@ -237,36 +304,59 @@ export default function Inventory() {
             </TableHeader>
             <TableBody>
               {filteredDevices.map((device) => (
-                <TableRow key={device.id} className="border-border hover:bg-muted/50">
+                <TableRow
+                  key={device.id}
+                  className="border-border hover:bg-muted/50"
+                >
                   <TableCell>
                     <input type="checkbox" className="rounded" />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{getDeviceIcon(device.type)}</span>
+                      <span className="text-lg">
+                        {getDeviceIcon(device.type)}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{device.ip}</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {device.ip}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span>{getOSIcon(device.osType)}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{device.deviceFunction}</TableCell>
+                  <TableCell className="text-sm">
+                    {device.deviceFunction}
+                  </TableCell>
                   <TableCell className="text-sm">{device.osVersion}</TableCell>
                   <TableCell>
-                    <Badge className={cn("text-xs", getSecurityStateColor(device.securedState))}>
-                      {device.securedState.charAt(0).toUpperCase() + device.securedState.slice(1)}
+                    <Badge
+                      className={cn(
+                        "text-xs",
+                        getSecurityStateColor(device.securedState)
+                      )}
+                    >
+                      {device.securedState.charAt(0).toUpperCase() +
+                        device.securedState.slice(1)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">{device.hostName}</TableCell>
-                  <TableCell className="text-sm">{device.networkName}</TableCell>
-                  <TableCell className="text-sm">{device.manufacturer}</TableCell>
+                  <TableCell className="text-sm">
+                    {device.networkName}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {device.manufacturer}
+                  </TableCell>
                   <TableCell className="text-sm">{device.domain}</TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
                       {device.tags?.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {tag}
                         </Badge>
                       ))}

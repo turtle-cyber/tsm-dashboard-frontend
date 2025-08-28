@@ -2,6 +2,11 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -76,3 +81,50 @@ export function resolveNowRelativeToISO(rel: string, now = new Date()): string {
 export type CanonicalRange =
   | { mode: "relative"; from: string; to: string } // e.g. now-24h -> now
   | { mode: "absolute"; from: string; to: string }; // ISO strings
+
+// Indian + short (K/L/Cr) formatter
+export function toFixedTrim(n: number, frac = 1) {
+  return n.toFixed(frac).replace(/\.0+$|(?<=\.\d*?)0+$/g, "");
+}
+
+export function formatFullIN(value: number) {
+  return new Intl.NumberFormat("en-IN").format(value);
+}
+
+export function formatAbbrevIN(value: number): string {
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1e7) return `${sign}${toFixedTrim(abs / 1e7)} Cr`;
+  if (abs >= 1e5) return `${sign}${toFixedTrim(abs / 1e5)} L`;
+  if (abs >= 1e3) return `${sign}${toFixedTrim(abs / 1e3)} K`;
+  return `${sign}${formatFullIN(abs)}`;
+}
+
+interface TruncTextProps {
+  value?: string | number;
+  maxWidth?: string; // e.g. "max-w-[140px]"
+  className?: string;
+  side?: "top" | "right" | "bottom" | "left"; // optional for tooltip position
+}
+
+export function TruncText({
+  value,
+  maxWidth = "max-w-[140px]",
+  className = "",
+  side = "top",
+}: TruncTextProps) {
+  const text = value?.toString() ?? "—";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={`truncate ${maxWidth} whitespace-nowrap overflow-hidden ${className}`}
+        >
+          {text}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side={side}>{text}</TooltipContent>
+    </Tooltip>
+  );
+}

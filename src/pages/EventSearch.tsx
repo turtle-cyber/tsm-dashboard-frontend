@@ -38,9 +38,9 @@ import {
   GET_INDICES,
   GET_FIELD_BY_PATTERN,
   GET_EVENT_HISTOGRAM,
-} from "../constants/eventSearchEndpoints";
+} from "../endpoints/eventSearchEndpoints";
 
-import { http } from "../data/config";
+import { http } from "../lib/config";
 import { toast } from "sonner";
 import {
   SkeletonTableRows,
@@ -114,7 +114,7 @@ function useGetPaginatedLogs(
     hasPrev: false,
     hasNext: false,
     count: 0,
-    startTime: "", // <—
+    startTime: "",
     endTime: "",
     ...(source_includes_csv ? { source_includes: source_includes_csv } : {}),
   });
@@ -883,7 +883,7 @@ export default function EventSearch() {
                               const v = valueForField(row, f);
                               const s =
                                 typeof v === "string"
-                                  ? truncate(v, 120)
+                                  ? truncate(v, 180)
                                   : typeof v === "number"
                                   ? v
                                   : v == null

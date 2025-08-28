@@ -24,6 +24,7 @@ interface LineChartProps {
   data: LineChartData[];
   lines: LineConfig[];
   xAxisKey: string;
+  chartType?: "linear" | "monotone" | "step" | "basis";
   height?: number;
   showGrid?: boolean;
   showLegend?: boolean;
@@ -50,6 +51,7 @@ export function LineChart({
   data,
   lines,
   xAxisKey,
+  chartType = "linear",
   height = 300,
   showGrid = true,
   showLegend = true,
@@ -90,7 +92,7 @@ export function LineChart({
         {lines.map((line, index) => (
           <Line
             key={index}
-            type="monotone"
+            type={chartType}
             dataKey={line.dataKey}
             stroke={line.color}
             strokeWidth={line.strokeWidth || 2}
