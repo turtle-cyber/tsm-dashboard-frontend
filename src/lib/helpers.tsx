@@ -1,12 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { TableRow, TableCell } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TableRow, TableCell } from "@/ui/table";
+import { Skeleton } from "@/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
