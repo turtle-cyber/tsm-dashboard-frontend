@@ -200,7 +200,7 @@ export function OverviewDashboard() {
 
   return (
     <>
-      <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch">
+      <div className="grid gap-4 lg:grid-cols-[67%_33%] items-stretch">
         {/*  */}
         <section className="grid gap-4 grid-rows-[auto_1fr]">
           {/* Row 1: four event cards */}

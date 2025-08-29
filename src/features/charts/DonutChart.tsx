@@ -219,10 +219,10 @@ export function DonutChart<T = any>({
                 className="inline-block w-3 h-3 rounded-full"
                 style={{ backgroundColor: d.color }}
               />
-              <span className="text-sm text-muted-foreground flex-1">
+              <span className="text-xs text-muted-foreground flex-1">
                 {d.name}
               </span>
-              <span className="text-sm text-muted-foreground font-semibold">
+              <span className="text-xs text-muted-foreground font-semibold">
                 {d.value}
               </span>
             </button>

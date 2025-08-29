@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -18,19 +18,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/ui/select";
-import { Filter, Plus, ChevronDown, MoreHorizontal } from "lucide-react";
+import {
+  Filter,
+  Plus,
+  ChevronDown,
+  MoreHorizontal,
+  ArrowDown,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
-import { alertsTableData } from "@/data/mockData";
+// import { alertsTableData } from "@/data/mockData";
+import { http } from "@/lib/config";
+import { GET_HIGH_CRTICAL_ALERTS } from "../alertsEndpoints";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/ui/tooltip";
+import { CustomActionPopover, AutomatedActionPopover } from "./ActionPopover";
 
 interface AlertsDataGridProps {
   onAlertSelect: (alertId: string) => void;
   selectedAlertId?: string;
 }
+
+const useGetHighCriticalAlerts = () => {
+  const [alertsTableData, setAlertsTableData] = useState<any>([]);
+  const [highCriticalLoading, setHighCriticalLoading] = useState(false);
+
+  const fetchAgents = useCallback(async () => {
+    setHighCriticalLoading(true);
+    try {
+      const response = await http.get(GET_HIGH_CRTICAL_ALERTS);
+
+      setAlertsTableData(response?.data?.hits || []);
+      console.log(response);
+    } catch (error) {
+      console.error("Error fetching top agents:", error);
+    } finally {
+      setHighCriticalLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  return { alertsTableData, highCriticalLoading, refetch: fetchAgents };
+};
 
 export function AlertsDataGrid({
   onAlertSelect,
@@ -38,6 +79,11 @@ export function AlertsDataGrid({
 }: AlertsDataGridProps) {
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [timeRange, setTimeRange] = useState("default");
+  const [automatedActionPopoverOpen, setAutomatedActionPopoverOpen] =
+    useState(false);
+  const [customActionPopoverOpen, setCustomActionPopoverOpen] = useState(false);
+
+  const { alertsTableData, highCriticalLoading } = useGetHighCriticalAlerts();
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -67,19 +113,6 @@ export function AlertsDataGrid({
           {/* Time Range Filter */}
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Dec 2, 2024 12:00 AM - Dec 3, 2024 12:00 AM" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">
-                  Dec 2, 2024 12:00 AM - Dec 3, 2024 12:00 AM
-                </SelectItem>
-                <SelectItem value="last-hour">Last Hour</SelectItem>
-                <SelectItem value="last-24-hours">Last 24 Hours</SelectItem>
-                <SelectItem value="last-week">Last Week</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <Button variant="outline" size="sm" className="h-8">
@@ -142,9 +175,8 @@ export function AlertsDataGrid({
               <TableHead>Alert Name</TableHead>
               <TableHead>Severity</TableHead>
               <TableHead>MITRE Technique</TableHead>
-              <TableHead>AI Verdict</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -153,10 +185,10 @@ export function AlertsDataGrid({
                 key={alert.id}
                 className={`cursor-pointer transition-colors ${
                   selectedAlertId === alert.id
-                    ? "bg-primary/5 border-l-2 border-l-primary"
+                    ? "bg-primary/5 border-l-2"
                     : "hover:bg-muted/50"
                 }`}
-                onClick={() => onAlertSelect(alert.id)}
+                // onClick={() => onAlertSelect(alert.id)}
               >
                 <TableCell>
                   <Checkbox
@@ -168,55 +200,71 @@ export function AlertsDataGrid({
                   />
                 </TableCell>
                 <TableCell className="font-mono text-sm">
-                  {alert.reportedTime}
+                  {alert.timestamp}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-primary hover:underline">
-                      {alert.alertName}
+                  <div className="flex items-center">
+                    <span className="font-medium hover:underline">
+                      {alert.alertDescription}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <SeverityBadge severity={alert.severity}>
+                  <SeverityBadge severity={alert.severity.toLowerCase()}>
                     {alert.severity.charAt(0).toUpperCase() +
                       alert.severity.slice(1)}
                   </SeverityBadge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="items-center">
                   <Badge variant="outline" className="font-mono">
-                    {alert.mitreTechnique}
+                    {alert.mitreId}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-1">
                     <span className="text-sm font-semibold text-primary">
-                      {alert.verdict}
+                      {alert.verdict ? alert.verdict : "-"}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={alert.status === "new" ? "default" : "secondary"}
-                    className="capitalize"
-                  >
-                    {alert.status}
-                  </Badge>
-                </TableCell>
+
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-20 bg-primary"
+                      >
+                        Action
+                        <ArrowDown />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Investigate</DropdownMenuItem>
-                      <DropdownMenuItem>Mark as Resolved</DropdownMenuItem>
-                      <DropdownMenuItem>Assign</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setAutomatedActionPopoverOpen(true)}
+                      >
+                        Automated Action
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setCustomActionPopoverOpen(true)}
+                      >
+                        Add Playbook
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>Ignore</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+
+                  {automatedActionPopoverOpen && (
+                    <AutomatedActionPopover
+                      onClose={() => setAutomatedActionPopoverOpen(false)}
+                    />
+                  )}
+                  {customActionPopoverOpen && (
+                    <AutomatedActionPopover
+                      onClose={() => setAutomatedActionPopoverOpen(false)}
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ))}

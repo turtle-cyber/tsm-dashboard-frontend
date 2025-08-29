@@ -210,30 +210,15 @@ export function SiemSidebar() {
       collapsible="icon"
     >
       <SidebarContent className="py-4">
-        <div className="px-3 mb-6">
+        <div className="p mb-2">
           <div className="flex items-center">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-md">
-              <span className="text-xs font-bold text-primary-foreground">
-                S
-              </span>
-            </div>
-            {!collapsed && (
-              <div className="ml-3">
-                <div className="text-sm font-semibold text-sidebar-foreground">
-                  Turtleneck
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Security Manager Dashboard
-                </div>
-              </div>
-            )}
+            {collapsed ? <img src="/favicon.ico" /> : <img src="/logo.svg" />}
           </div>
         </div>
 
-        <SidebarSection title="" items={navigationItems} />
+        <SidebarSection title="HOME" items={navigationItems} />
         <SidebarSection title="TRIAGE" items={triageItems} />
         <SidebarSection title="DISCOVER" items={discoverItems} />
-        {/* <SidebarSection title="COMPLIANCE" items={complianceItems} /> */}
         <SidebarSection title="CONFIGURE" items={configureItems} />
       </SidebarContent>
     </Sidebar>

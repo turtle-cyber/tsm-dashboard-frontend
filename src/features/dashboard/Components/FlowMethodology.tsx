@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Card } from "@/features/ui/card";
+import { Card } from "@/ui/card";
 import { ScanSearch, Workflow, Filter, ActivitySquare } from "lucide-react";
 
 // ---- types ----

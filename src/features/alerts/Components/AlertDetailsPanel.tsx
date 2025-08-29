@@ -6,7 +6,6 @@ import { SeverityBadge } from "@/ui/severity-badge";
 import { Badge } from "@/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
-import { Separator } from "@/ui/separator";
 
 interface AlertDetailsPanelProps {
   alertId: string;
@@ -20,7 +19,7 @@ export function AlertDetailsPanel({
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-[600px] bg-background border-l border-border shadow-2xl overflow-hidden">
+    <div className="fixed inset-y-0 right-0 z-50 w-[30%] bg-background border-l border-border shadow-2xl overflow-hidden">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border bg-card">
@@ -49,28 +48,6 @@ export function AlertDetailsPanel({
           </Button>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-3 p-4 border-b border-border bg-muted/20">
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-primary hover:bg-primary/90"
-          >
-            Actions
-          </Button>
-          <Button variant="outline" size="sm">
-            Mitigate
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-primary/10 text-primary border-primary/20"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Automate
-          </Button>
-        </div>
-
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <Tabs
@@ -78,82 +55,7 @@ export function AlertDetailsPanel({
             onValueChange={setActiveTab}
             className="h-full"
           >
-            <TabsList className="grid w-full grid-cols-8 h-12 bg-muted/30 border-b border-border rounded-none">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="indicators">Indicators (1)</TabsTrigger>
-              <TabsTrigger value="mitigation">Mitigation (0)</TabsTrigger>
-              <TabsTrigger value="notes">Notes (0)</TabsTrigger>
-              <TabsTrigger value="history">History (0)</TabsTrigger>
-              <TabsTrigger value="graph">Graph</TabsTrigger>
-              <TabsTrigger value="raw-data">Raw Data</TabsTrigger>
-            </TabsList>
-
             <TabsContent value="overview" className="p-6 space-y-6">
-              {/* Alert Status */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">
-                    Alert Status
-                  </div>
-                  <Badge variant="secondary" className="w-full justify-center">
-                    New
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">
-                    Assigned To
-                  </div>
-                  <Badge variant="outline" className="w-full justify-center">
-                    Unassigned
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">
-                    Analyst Verdict
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="w-full justify-center text-primary"
-                  >
-                    Undefined
-                  </Badge>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Purple AI Section */}
-              <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                      <Brain className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                    <span>Purple AI</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-2">
-                        Community Verdict (True Positive, not Benign)
-                      </div>
-                      <div className="text-3xl font-bold text-primary">
-                        &gt;{alertDetails.aiVerdict.confidence}%
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-2">
-                        AI Similarity Analysis
-                      </div>
-                      <div className="text-3xl font-bold text-primary">
-                        {alertDetails.similarityScore}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Description */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Description</h3>
