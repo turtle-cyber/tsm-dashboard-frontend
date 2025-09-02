@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "@/layout/MainLayout";
 import Dashboard from "./features/dashboard/DashboardPage";
+import Response from "./features/response-page/Response";
 import Alerts from "./features/alerts/Alerts";
 import EventSearch from "./features/event-search/EventSearch";
 import Inventory from "./features/inventory/Inventory";
-import Threats from "./features/threats/Threats";
 import ThreatsList from "./features/threats/Components/ThreatsList";
 import ThreatDetails from "./features/threats/Components/ThreatDetails";
 import NotFound from "./pages/NotFound";
@@ -24,6 +24,7 @@ const App = () => (
         <MainLayout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/response" element={<Response />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/event-search" element={<EventSearch />} />
             <Route path="/inventory" element={<Inventory />} />

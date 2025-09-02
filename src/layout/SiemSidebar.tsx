@@ -39,6 +39,15 @@ const navigationItems = [
   },
 ];
 
+const responseItems = [
+  {
+    title: "Response",
+    icon: AlertTriangle,
+    url: "/response",
+    section: "response",
+  },
+];
+
 const triageItems = [
   {
     title: "Alerts",
@@ -217,6 +226,7 @@ export function SiemSidebar() {
         </div>
 
         <SidebarSection title="HOME" items={navigationItems} />
+        <SidebarSection title="RESPONSE" items={responseItems} />
         <SidebarSection title="TRIAGE" items={triageItems} />
         <SidebarSection title="DISCOVER" items={discoverItems} />
         <SidebarSection title="CONFIGURE" items={configureItems} />

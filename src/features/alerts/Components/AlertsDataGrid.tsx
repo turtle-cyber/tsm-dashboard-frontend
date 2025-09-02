@@ -41,7 +41,6 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/ui/tooltip";
-import { CustomActionPopover, AutomatedActionPopover } from "./ActionPopover";
 
 interface AlertsDataGridProps {
   onAlertSelect: (alertId: string) => void;
@@ -255,7 +254,7 @@ export function AlertsDataGrid({
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {automatedActionPopoverOpen && (
+                  {/* {automatedActionPopoverOpen && (
                     <AutomatedActionPopover
                       onClose={() => setAutomatedActionPopoverOpen(false)}
                     />
@@ -264,7 +263,7 @@ export function AlertsDataGrid({
                     <AutomatedActionPopover
                       onClose={() => setAutomatedActionPopoverOpen(false)}
                     />
-                  )}
+                  )} */}
                 </TableCell>
               </TableRow>
             ))}
