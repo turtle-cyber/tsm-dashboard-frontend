@@ -11,6 +11,7 @@ import Inventory from "./features/inventory/Inventory";
 import Threats from "./features/threats/Threats";
 import ThreatsList from "./features/threats/Components/ThreatsList";
 import ThreatDetails from "./features/threats/Components/ThreatDetails";
+import MetroMapDemo from "./components/MetroMapDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -118,17 +119,8 @@ const App = () => (
                 </div>
               }
             />
-            <Route
-              path="/agent-management"
-              element={
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Agent Management</h1>
-                  <p className="text-muted-foreground">
-                    Agent management coming soon...
-                  </p>
-                </div>
-              }
-            />
+            <Route path="/agent-management" element={<div className="p-6"><h1 className="text-2xl font-bold">Agent Management</h1><p className="text-muted-foreground">Agent management coming soon...</p></div>} />
+            <Route path="/metro-map-demo" element={<MetroMapDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

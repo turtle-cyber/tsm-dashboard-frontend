@@ -23,6 +23,7 @@ type DonutChartProps<T = any> = {
   showTooltip?: boolean;
   chartHeight?: number;
   legendPosition?: LegendPosition;
+  centerText?: { line1: string; line2: string };
 };
 
 const DEFAULT_COLORS = [
@@ -120,19 +121,19 @@ const CustomTooltip = ({
 };
 
 /** Center label ("Total" and number) */
-const renderCenterLabel = (total: number) => (props: any) => {
+const renderCenterLabel = (total: number, centerText?: { line1: string; line2: string }) => (props: any) => {
   const { cx, cy } = props;
   return (
     <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
       <tspan x={cx} dy="-0.4em" className="text-xs fill-muted-foreground">
-        Total
+        {centerText?.line1 || "Total"}
       </tspan>
       <tspan
         x={cx}
         dy="1.2em"
         className="text-md font-bold fill-card-foreground"
       >
-        {total}
+        {centerText?.line2 || total}
       </tspan>
     </text>
   );
@@ -150,6 +151,7 @@ export function DonutChart<T = any>({
   showTooltip = true,
   chartHeight = 250,
   legendPosition = "right",
+  centerText,
 }: DonutChartProps<T>) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [selected, setSelected] = useState<number[]>([]); // multi-select lock
@@ -253,7 +255,7 @@ export function DonutChart<T = any>({
             activeIndex={activeIndex} // supports number[]
             activeShape={renderActiveShape}
             onClick={(_, idx) => toggleSelect(idx)}
-            label={renderCenterLabel(total)} // center Total
+            label={renderCenterLabel(total, centerText)} // center Total
           >
             {chartData.map((entry, index) => {
               const isActive =

@@ -91,6 +91,12 @@ const discoverItems = [
     url: "/activities",
     section: "discover",
   },
+  {
+    title: "Metro Map Demo",
+    icon: Network,
+    url: "/metro-map-demo",
+    section: "discover",
+  },
 ];
 
 const complianceItems = [
