@@ -12,6 +12,7 @@ import Threats from "./features/threats/Threats";
 import ThreatsList from "./features/threats/Components/ThreatsList";
 import ThreatDetails from "./features/threats/Components/ThreatDetails";
 import MetroMapDemo from "./components/MetroMapDemo";
+import CampaignLifecycleDemo from "./components/CampaignLifecycleDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

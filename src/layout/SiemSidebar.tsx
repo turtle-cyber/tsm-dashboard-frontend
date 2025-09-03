@@ -97,6 +97,12 @@ const discoverItems = [
     url: "/metro-map-demo",
     section: "discover",
   },
+  {
+    title: "Campaign Lifecycle",
+    icon: Network,
+    url: "/campaign-lifecycle",
+    section: "discover",
+  },
 ];
 
 const complianceItems = [
