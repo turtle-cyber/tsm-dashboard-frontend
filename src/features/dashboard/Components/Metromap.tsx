@@ -69,25 +69,25 @@ export const mockData = [
     { 
       id: '1', 
       type: 'input', 
-      data: { label: 'Campaign' }, 
+      data: { label: 'Campaign2' }, 
       position: { x: 250, y: 5 },
       theme: 'primary'
     },
     { 
       id: '2', 
-      data: { label: 'Event Id Pattern Recognition' }, 
+      data: { label: 'Event Id Pattern Recognition2' }, 
       position: { x: 100, y: 100 },
       theme: 'secondary'
     },
     { 
       id: '3', 
-      data: { label: 'Behavioral Sequence Analysis' }, 
+      data: { label: 'Behavioral Sequence Analysis2' }, 
       position: { x: 400, y: 200 },
       theme: 'accent'
     },
     { 
       id: '5', 
-      data: { label: 'Intervened' }, 
+      data: { label: 'Intervened2' }, 
       position: { x: 600, y: 300 },
       theme: 'danger'
     }
@@ -134,25 +134,25 @@ export const campaignNodes2 = [
     { 
       id: '1', 
       type: 'input', 
-      data: { label: 'Campaign' }, 
+      data: { label: 'Campaign2' }, 
       position: { x: 250, y: 5 },
       theme: 'primary'
     },
     { 
       id: '2', 
-      data: { label: 'Event Id Pattern Recognition' }, 
+      data: { label: 'Event Id Pattern Recognition2' }, 
       position: { x: 100, y: 100 },
       theme: 'secondary'
     },
     { 
       id: '3', 
-      data: { label: 'Behavioral Sequence Analysis' }, 
+      data: { label: 'Behavioral Sequence Analysis2' }, 
       position: { x: 400, y: 200 },
       theme: 'accent'
     },
     { 
       id: '5', 
-      data: { label: 'Intervened' }, 
+      data: { label: 'Intervened2' }, 
       position: { x: 600, y: 300 },
       theme: 'danger'
     }

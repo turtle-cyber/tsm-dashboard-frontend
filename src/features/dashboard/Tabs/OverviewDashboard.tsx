@@ -37,8 +37,6 @@ import { FaWindows, FaLinux, FaUbuntu } from "react-icons/fa";
 import { TruncText } from "@/lib/helpers";
 import ConfidenceGauge from "../Components/ConfidenceGauge";
 import { FlowDiagram, mockData } from "../Components/Metromap";
-// import Metromap from "../Components/Metromap";
-// import App from "../Components/Metromap";
 
 const stations = [
   { id: "c1-a", x: 140, y: 220, label: "Behavioral Seq", note: "Build temporal models" },
@@ -216,16 +214,13 @@ export function OverviewDashboard() {
   const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
   const { topAlertsData, alertsLoading } = useGetTopAlerts();
   const { agentsData, agentsLoading } = useGetAgents();
-  const [data, setData] = useState({node:[], edge:[]});
-
- const onRowClick = (row: any) => {
-    if (row.node && row.edge) {
-      setData({ node: row.node, edge: row.edge });
-    } else {
-      console.error("No node or edge data found for the selected campaign.");
-    }
-  };
-
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  
+  const handleRowClick = (campaignData) => {
+  console.log('Clicked on:', campaignData.campaign); // Add this for debugging
+  setSelectedCampaign(null); // Reset first
+  setTimeout(() => setSelectedCampaign(campaignData), 0); // Then set new data
+};
 
   return (
     <>
@@ -436,18 +431,31 @@ export function OverviewDashboard() {
       </div>
       <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch pt-2">
         <Card>
-          <CardContent>
-           <div className="p-4">
-              <FlowDiagram
-                nodeConfig={data.node}
-                edgeConfig={data.edge}
-                height="500px"
-                backgroundProps={{ color: "#f0f0f0", gap: 20 }}
-                edgeStyle={{ stroke: '#2e7d32', strokeWidth: 3 }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+  <CardContent>
+    <div className="p-4">
+      {selectedCampaign ? (
+        <FlowDiagram 
+          key={selectedCampaign.campaign} // Add key prop for forced re-render
+          nodeConfig={selectedCampaign.node}
+          edgeConfig={selectedCampaign.edge}
+          height="500px"
+        />
+      ) : (
+        <div style={{ 
+          height: '500px',
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          color: '#888',
+          border: '1px dashed #ccc',
+          borderRadius: '8px'
+        }}>
+          Click on a table row to view flow diagram
+        </div>
+      )}
+    </div>
+  </CardContent>
+</Card>
         <Card>
           <CardHeader className="pb-2 flex items-center justify-between">
             <CardTitle className="text-base">
@@ -474,7 +482,8 @@ export function OverviewDashboard() {
                   <TableRow
                     key={index}
                     className="border-border/60 hover:bg-muted/30 transition-colors"
-                    onClick={()=> {}}
+                    // onClick={()=> {}}
+                    onClick={() => handleRowClick(row)}
                   >
                     <TableCell>{row.campaign}</TableCell>
                     <TableCell>{row.mitreTactic}</TableCell>
