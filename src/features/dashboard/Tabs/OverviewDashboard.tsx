@@ -429,7 +429,7 @@ export function OverviewDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch pt-2">
+      <div className="grid gap-4 lg:grid-cols-[67%_33%] items-stretch pt-2">
         <Card>
   <CardContent>
     <div className="p-4">
