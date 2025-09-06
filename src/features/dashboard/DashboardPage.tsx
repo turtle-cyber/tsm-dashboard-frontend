@@ -1,5 +1,6 @@
 import { DashboardTabs } from "@/features/dashboard/DashboardTabs";
 import { OverviewDashboard } from "@/features/dashboard/Tabs/OverviewDashboard";
+import HealthDashboard from "./Tabs/HealthDashboard";
 
 export default function Dashboard() {
   return (
@@ -12,6 +13,7 @@ export default function Dashboard() {
 
       <DashboardTabs>
         <OverviewDashboard />
+        <HealthDashboard/>
       </DashboardTabs>
     </div>
   );

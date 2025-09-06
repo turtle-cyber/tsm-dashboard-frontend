@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
 import { EndpointsDashboard } from "./Tabs/EndpointsDashboard";
+import HealthDashboard from "./Tabs/HealthDashboard";
 
 interface DashboardTabsProps {
   children: React.ReactNode;
@@ -45,20 +46,9 @@ export function DashboardTabs({ children }: DashboardTabsProps) {
         <EndpointsDashboard />
       </TabsContent>
 
-      {dashboardTabs.slice(2).map((tab) => (
-        <TabsContent key={tab.id} value={tab.id} className="mt-6">
-          <div className="flex items-center justify-center h-64 bg-card border border-border rounded-lg">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {tab.label}
-              </h3>
-              <p className="text-muted-foreground">
-                This dashboard tab is under development.
-              </p>
-            </div>
-          </div>
-        </TabsContent>
-      ))}
+      <TabsContent value="health" className="mt-6">
+        <HealthDashboard />
+      </TabsContent>
     </Tabs>
   );
 }
