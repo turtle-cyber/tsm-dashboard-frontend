@@ -36,6 +36,23 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { FaWindows, FaLinux, FaUbuntu } from "react-icons/fa";
 import { TruncText } from "@/lib/helpers";
 import ConfidenceGauge from "../Components/ConfidenceGauge";
+import { FlowDiagram, mockData } from "../Components/Metromap";
+
+const stations = [
+  { id: "c1-a", x: 140, y: 220, label: "Behavioral Seq", note: "Build temporal models" },
+  { id: "mid",  x: 490, y: 260, label: "Intervened",     note: "Campaign 2" },
+  { id: "c1-b", x: 820, y: 180, label: "Noise Reduction", note: "Distinguish malicious signals" },
+
+  { id: "c2-a", x: 140, y: 300, label: "Event ID Pattern", note: "Analyze sequence of …" },
+  { id: "c2-b", x: 820, y: 320, label: "Behavioral Seq",   note: "Short-term context" },
+];
+const lines = [
+  { id: "red-line",   colorVar: "--line-red",   stations: ["c1-a","mid","c1-b"], radius: 16 },
+  { id: "blue-line",  colorVar: "--line-blue",  stations: ["c2-a","mid","c2-b"], radius: 16 },
+];
+const handleStationSelect = (stationId: string) => {
+    console.log('Selected station:', stationId);
+  };
 
 // Custom API Hooks
 function useGetAlertCount() {
@@ -197,6 +214,13 @@ export function OverviewDashboard() {
   const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
   const { topAlertsData, alertsLoading } = useGetTopAlerts();
   const { agentsData, agentsLoading } = useGetAgents();
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  
+  const handleRowClick = (campaignData) => {
+  console.log('Clicked on:', campaignData.campaign); // Add this for debugging
+  setSelectedCampaign(null); // Reset first
+  setTimeout(() => setSelectedCampaign(campaignData), 0); // Then set new data
+};
 
   return (
     <>
@@ -405,8 +429,33 @@ export function OverviewDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch pt-2">
-        <Card>Hi</Card>
+      <div className="grid gap-4 lg:grid-cols-[67%_33%] items-stretch pt-2">
+        <Card>
+  <CardContent>
+    <div className="p-4">
+      {selectedCampaign ? (
+        <FlowDiagram 
+          key={selectedCampaign.campaign} // Add key prop for forced re-render
+          nodeConfig={selectedCampaign.node}
+          edgeConfig={selectedCampaign.edge}
+          height="500px"
+        />
+      ) : (
+        <div style={{ 
+          height: '500px',
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          color: '#888',
+          border: '1px dashed #ccc',
+          borderRadius: '8px'
+        }}>
+          Click on a table row to view flow diagram
+        </div>
+      )}
+    </div>
+  </CardContent>
+</Card>
         <Card>
           <CardHeader className="pb-2 flex items-center justify-between">
             <CardTitle className="text-base">
@@ -428,6 +477,27 @@ export function OverviewDashboard() {
                   <TableHead className="w-[10%] text-xs">Description</TableHead>
                 </TableRow>
               </TableHeader>
+              <TableBody className="text-xs">
+                {mockData.map((row, index) => (
+                  <TableRow
+                    key={index}
+                    className="border-border/60 hover:bg-muted/30 transition-colors"
+                    // onClick={()=> {}}
+                    onClick={() => handleRowClick(row)}
+                  >
+                    <TableCell>{row.campaign}</TableCell>
+                    <TableCell>{row.mitreTactic}</TableCell>
+                    <TableCell>{row.agentIP}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className="px-1 py-0.5 rounded-md">
+                        {row.maliciousConfidence}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{row.description}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+
             </Table>
           </CardContent>
         </Card>

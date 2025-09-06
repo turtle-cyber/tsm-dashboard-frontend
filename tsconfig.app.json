@@ -3,18 +3,17 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
 
-    /* Bundler mode */
+    // ✅ make TS happy with "bundler" resolution
+    "module": "Preserve",
     "moduleResolution": "bundler",
+
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -22,9 +21,17 @@
     "noFallthroughCasesInSwitch": false,
 
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "paths": { "@/*": ["./src/*"] },
+
+    // ✅ ensure our d3-tube-map shim is loaded
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "src/types/**/*.d.ts",
+    "vite-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }
