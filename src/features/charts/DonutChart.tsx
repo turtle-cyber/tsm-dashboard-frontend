@@ -23,7 +23,16 @@ type DonutChartProps<T = any> = {
   showTooltip?: boolean;
   chartHeight?: number;
   legendPosition?: LegendPosition;
+  legendLabelMaxChars?: number; // NEW: default 36
 };
+
+const ELLIPSIS = ".....";
+function truncateText(s: string, max: number) {
+  const str = String(s ?? "");
+  return str.length > max
+    ? str.slice(0, Math.max(0, max - ELLIPSIS.length)) + ELLIPSIS
+    : str;
+}
 
 const DEFAULT_COLORS = [
   "#a465ce",
@@ -150,6 +159,7 @@ export function DonutChart<T = any>({
   showTooltip = true,
   chartHeight = 250,
   legendPosition = "right",
+  legendLabelMaxChars = 36,
 }: DonutChartProps<T>) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [selected, setSelected] = useState<number[]>([]); // multi-select lock
@@ -219,12 +229,19 @@ export function DonutChart<T = any>({
                 className="inline-block w-3 h-3 rounded-full"
                 style={{ backgroundColor: d.color }}
               />
-              <span className="text-xs text-muted-foreground flex-1">
-                {d.name}
-              </span>
-              <span className="text-xs text-muted-foreground font-semibold">
-                {d.value}
-              </span>
+              <div className="flex  gap-1 justify-center">
+                {/* Legend Name */}
+                <span
+                  className="text-xs text-muted-foreground leading-tight"
+                  title={d.name}
+                >
+                  {truncateText(d.name, legendLabelMaxChars)}
+                </span>
+                {/* Legend Value */}
+                <span className="text-xs text-muted-foreground font-semibold">
+                  {d.value}
+                </span>
+              </div>
             </button>
           );
         })}

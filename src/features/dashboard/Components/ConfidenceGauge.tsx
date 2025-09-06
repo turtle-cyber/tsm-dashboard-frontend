@@ -6,7 +6,6 @@ import {
   ResponsiveContainer,
   PolarRadiusAxis,
   Label,
-  Customized,
 } from "recharts";
 
 type Contributor = { label: string; value: number; color: string };
@@ -22,7 +21,7 @@ const contributors: Contributor[] = [
 
 function ContributorsList({ data }: { data: Contributor[] }) {
   return (
-    <div className="w-full mx-auto h-32 overflow-y-auto space-y-1 px-1 py-1">
+    <div className="w-full mx-auto h-28 overflow-y-auto px-1">
       {data.map((item, index) => (
         <div
           key={`${item.label}-${index}`}
@@ -163,9 +162,9 @@ const ConfidenceGauge: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center gap-2">
-      <div className="relative w-full h-48">
+      <div className="relative w-full h-36">
         {/* soft inner glow */}
-        <div className="absolute inset-0 flex justify-center items-start pt-14 pointer-events-none">
+        <div className="absolute inset-0 flex justify-center items-start pt-9 pointer-events-none">
           <Semicircle
             percentage={chartData[0].value}
             size={200}
@@ -184,7 +183,7 @@ const ConfidenceGauge: React.FC = () => {
           <RadialBarChart
             data={[{ value: 100 }]}
             cx="50%"
-            cy="81%"
+            cy="95%"
             innerRadius={TRACK_INNER}
             outerRadius={OUTER + 4}
             startAngle={180}
@@ -208,7 +207,7 @@ const ConfidenceGauge: React.FC = () => {
           <RadialBarChart
             data={chartData}
             cx="50%"
-            cy="81%"
+            cy="95%"
             innerRadius={BAND_INNER - 5}
             outerRadius={OUTER + 8}
             startAngle={180}

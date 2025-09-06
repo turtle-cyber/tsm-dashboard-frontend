@@ -291,7 +291,7 @@ export function OverviewDashboard() {
           <CardHeader className="pb-2 justify-between flex items-center">
             <CardTitle className="text-base">Top 5 Alerts</CardTitle>
           </CardHeader>
-          <CardContent className="">
+          <CardContent className="overflow-x-auto">
             <DonutChart
               data={topAlertsData}
               innerRadius={70}

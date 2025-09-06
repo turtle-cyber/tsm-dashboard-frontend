@@ -17,6 +17,13 @@ import { TruncText } from "@/lib/helpers";
 import { SeverityBadge } from "@/ui/severity-badge";
 import PolicyRuleFormDialog from "./Components/PolicyPopover";
 import PlaybookFormDialog from "./Components/ResponsePopover";
+import { FaEllipsisH } from "react-icons/fa";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/ui/dropdown-menu";
 
 const policyTableHeader = [
   "Scope",
@@ -203,12 +210,6 @@ const Response = () => {
                   ) : (
                     policyData.map((row: any) => (
                       <TableRow key={row?._id}>
-                        {/* <TableCell className="justify-items-center">
-                          <TruncText
-                            value={row?._id}
-                            maxWidth="max-w-[200px]"
-                          />
-                        </TableCell> */}
                         <TableCell className="justify-items-center">
                           <TruncText value={row?.scope} />
                         </TableCell>
@@ -239,13 +240,32 @@ const Response = () => {
                         <TableCell className="justify-center flex">
                           <Button
                             onClick={() => {
-                              toast.success("add new");
+                              toast.success("Activate Script");
                             }}
                             className="p-2"
                             variant="outline"
                           >
                             Activate
                           </Button>
+                        </TableCell>
+                        <TableCell className="justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Edit"
+                                className="rounded-full"
+                              >
+                                <FaEllipsisH className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem>Edit</DropdownMenuItem>
+                              <DropdownMenuItem>Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
@@ -338,7 +358,7 @@ const Response = () => {
                             }
                           />
                         </TableCell>
-                        <TableCell className="justify-items-center">
+                        <TableCell className="justify-center flex">
                           <SeverityBadge severity={row.severity.toLowerCase()}>
                             {row.severity.charAt(0).toUpperCase() +
                               row.severity.slice(1)}
@@ -382,7 +402,7 @@ const Response = () => {
                             value={row.frequency ? row.frequency : "N/A"}
                           />
                         </TableCell>
-                        <TableCell className="justify-items-center">
+                        <TableCell className="justify-center flex">
                           <Button
                             onClick={() => {
                               toast.success("add new");
@@ -392,6 +412,25 @@ const Response = () => {
                           >
                             Activate
                           </Button>
+                        </TableCell>
+                        <TableCell className="justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Edit"
+                                className="rounded-full"
+                              >
+                                <FaEllipsisH className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem>Edit</DropdownMenuItem>
+                              <DropdownMenuItem>Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
