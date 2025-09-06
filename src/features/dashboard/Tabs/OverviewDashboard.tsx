@@ -310,7 +310,7 @@ export function OverviewDashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Event Timeline (Last 24h)</CardTitle>
             </CardHeader>
-            <CardContent className="h-full">
+            {/* <CardContent className="h-full">
               <div className="h-full">
                 <LineChart
                   data={chartHistogramData}
@@ -320,7 +320,7 @@ export function OverviewDashboard() {
                   showLegend={false}
                 />
               </div>
-            </CardContent>
+            </CardContent> */}
           </Card>
         </section>
 
