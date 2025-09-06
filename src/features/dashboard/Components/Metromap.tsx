@@ -226,8 +226,6 @@ export const FlowDiagram = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        // onNodeClick={onNodeClick}
-        // onEdgeClick={onEdgeClick}
         connectionMode={connectionMode}
         fitView
       >
@@ -249,9 +247,6 @@ const CampaignFlow = () => {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Campaign Flow Diagram</h2>
       <FlowDiagram 
-        // nodeConfig={campaignNodes}
-        // edgeConfig={campaignEdges}
-        // onNodeClick={handleNodeClick}
         height="500px"
       />
     </div>
@@ -308,15 +303,3 @@ const DataProcessingFlow = () => {
     </div>
   );
 };
-
-// // Main component showing both examples
-// const App = () => {
-//   return (
-//     <div className="space-y-8">
-//       <CampaignFlow />
-//       <DataProcessingFlow />
-//     </div>
-//   );
-// };
-
-// export default App;
