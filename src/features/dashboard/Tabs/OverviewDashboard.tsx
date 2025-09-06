@@ -36,6 +36,25 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { FaWindows, FaLinux, FaUbuntu } from "react-icons/fa";
 import { TruncText } from "@/lib/helpers";
 import ConfidenceGauge from "../Components/ConfidenceGauge";
+import { FlowDiagram, mockData } from "../Components/Metromap";
+// import Metromap from "../Components/Metromap";
+// import App from "../Components/Metromap";
+
+const stations = [
+  { id: "c1-a", x: 140, y: 220, label: "Behavioral Seq", note: "Build temporal models" },
+  { id: "mid",  x: 490, y: 260, label: "Intervened",     note: "Campaign 2" },
+  { id: "c1-b", x: 820, y: 180, label: "Noise Reduction", note: "Distinguish malicious signals" },
+
+  { id: "c2-a", x: 140, y: 300, label: "Event ID Pattern", note: "Analyze sequence of …" },
+  { id: "c2-b", x: 820, y: 320, label: "Behavioral Seq",   note: "Short-term context" },
+];
+const lines = [
+  { id: "red-line",   colorVar: "--line-red",   stations: ["c1-a","mid","c1-b"], radius: 16 },
+  { id: "blue-line",  colorVar: "--line-blue",  stations: ["c2-a","mid","c2-b"], radius: 16 },
+];
+const handleStationSelect = (stationId: string) => {
+    console.log('Selected station:', stationId);
+  };
 
 // Custom API Hooks
 function useGetAlertCount() {
@@ -197,6 +216,16 @@ export function OverviewDashboard() {
   const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
   const { topAlertsData, alertsLoading } = useGetTopAlerts();
   const { agentsData, agentsLoading } = useGetAgents();
+  const [data, setData] = useState({node:[], edge:[]});
+
+ const onRowClick = (row: any) => {
+    if (row.node && row.edge) {
+      setData({ node: row.node, edge: row.edge });
+    } else {
+      console.error("No node or edge data found for the selected campaign.");
+    }
+  };
+
 
   return (
     <>
@@ -406,7 +435,19 @@ export function OverviewDashboard() {
         </Card>
       </div>
       <div className="grid gap-4 lg:grid-cols-[60%_40%] items-stretch pt-2">
-        <Card>Hi</Card>
+        <Card>
+          <CardContent>
+           <div className="p-4">
+              <FlowDiagram
+                nodeConfig={data.node}
+                edgeConfig={data.edge}
+                height="500px"
+                backgroundProps={{ color: "#f0f0f0", gap: 20 }}
+                edgeStyle={{ stroke: '#2e7d32', strokeWidth: 3 }}
+              />
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="pb-2 flex items-center justify-between">
             <CardTitle className="text-base">
@@ -428,6 +469,26 @@ export function OverviewDashboard() {
                   <TableHead className="w-[10%] text-xs">Description</TableHead>
                 </TableRow>
               </TableHeader>
+              <TableBody className="text-xs">
+                {mockData.map((row, index) => (
+                  <TableRow
+                    key={index}
+                    className="border-border/60 hover:bg-muted/30 transition-colors"
+                    onClick={()=> {}}
+                  >
+                    <TableCell>{row.campaign}</TableCell>
+                    <TableCell>{row.mitreTactic}</TableCell>
+                    <TableCell>{row.agentIP}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className="px-1 py-0.5 rounded-md">
+                        {row.maliciousConfidence}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{row.description}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+
             </Table>
           </CardContent>
         </Card>
