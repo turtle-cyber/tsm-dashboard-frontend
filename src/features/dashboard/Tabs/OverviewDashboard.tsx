@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
 import { MalwareKPICard } from "../Components/MalwareKPICard";
 
-import { Copy, FileIcon, Monitor } from "lucide-react";
+import { ArrowDown, Copy, FileIcon, Monitor } from "lucide-react";
 import EventCard from "../Components/EventCard";
 import OverallMalwareCard from "../Components/OverallMalwareCard";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,8 +11,12 @@ import {
   GET_AGENTS,
   GET_TOP_ALERTS,
 } from "@/features/dashboard/dashboardEndpoints";
+// ADD: Import the event search endpoint for histogram data
+import { GET_EVENT_HISTOGRAM } from "@/features/event-search/eventSearchEndpoints";
 import { http } from "@/lib/config";
-import AlertsLineChart from "../Components/AlertsLineChart";
+import AlertsBarChart from "../Components/AlertsBarChart";
+// ADD: Import LineChart component
+import { LineChart } from "@/features/charts/LineChart";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -152,6 +156,45 @@ const useGetAgents = () => {
   return { agentsData, agentsLoading, refetch: fetchAgents };
 };
 
+// ADD: New hook for Event Histogram data (copied from Event Search)
+function useGetEventHistogram(patternName?: string) {
+  const [histogramData, setHistogramData] = useState([]);
+  const [histogramLoading, setHistogramLoading] = useState(false);
+  const [histogramError, setHistogramError] = useState(false);
+
+  const fetchHistogram = useCallback(async () => {
+    setHistogramLoading(true);
+    setHistogramError(false);
+    setHistogramData([]);
+    try {
+      // Use last 24 hours as default time range
+      const endTime = new Date().toISOString();
+      const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      
+      const res = await http.get(GET_EVENT_HISTOGRAM, {
+        params: { pattern: patternName, startTime, endTime },
+      });
+      setHistogramData(res.data?.data || []);
+    } catch (err) {
+      setHistogramError(true);
+      setHistogramData([]);
+    } finally {
+      setHistogramLoading(false);
+    }
+  }, [patternName]);
+
+  useEffect(() => {
+    if (patternName) fetchHistogram();
+  }, [fetchHistogram]);
+
+  return {
+    histogramData,
+    histogramLoading,
+    histogramError,
+    refetch: fetchHistogram,
+  };
+}
+
 function StatusDot({ status }: { status?: string }) {
   const s = (status || "").toLowerCase();
   const color =
@@ -214,13 +257,36 @@ export function OverviewDashboard() {
   const { trendsData, trendsLoading } = useGetAlertTrends(selectedSeverity);
   const { topAlertsData, alertsLoading } = useGetTopAlerts();
   const { agentsData, agentsLoading } = useGetAgents();
+  // ADD: Get histogram data for event search chart
+  const { histogramData, histogramLoading } = useGetEventHistogram("fmd-alerts");
+  
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   
   const handleRowClick = (campaignData) => {
-  console.log('Clicked on:', campaignData.campaign); // Add this for debugging
-  setSelectedCampaign(null); // Reset first
-  setTimeout(() => setSelectedCampaign(campaignData), 0); // Then set new data
-};
+    console.log('Clicked on:', campaignData.campaign);
+    setSelectedCampaign(null);
+    setTimeout(() => setSelectedCampaign(campaignData), 0);
+  };
+
+  // ADD: Format histogram data for LineChart (copied from Event Search)
+  const timeFmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const chartHistogramData = histogramData.map((d: any) => ({
+    time: timeFmt.format(new Date(d.key)),
+    count: d.count ?? 0,
+  }));
+
+  const histogramConfig = [
+    {
+      dataKey: "count",
+      color: "hsl(var(--primary))",
+      name: "Events",
+    },
+  ];
 
   return (
     <>
@@ -239,29 +305,20 @@ export function OverviewDashboard() {
             ))}
           </div>
 
-          {/* Row 2: Malware Detection panel (fills remaining height on the left) */}
+          {/* MODIFIED: Replace Malware Detection with Event Timeline */}
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Malware Detection</CardTitle>
+              <CardTitle className="text-base">Event Timeline (Last 24h)</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 mb-3">
-                {/* Third Row - Malware KPI Cards */}
-                <MalwareKPICard
-                  title="Fileless Malware Count"
-                  count={127}
-                  subtitle="Blocks harmful files hidden in downloads, attachments, and scripts"
-                  icon={<FileIcon className="h-6 w-6 text-red-500" />}
+            <CardContent className="h-full">
+              <div className="h-full">
+                <LineChart
+                  data={chartHistogramData}
+                  lines={histogramConfig}
+                  xAxisKey="time"
+                  height={200}
+                  showLegend={false}
                 />
-                <MalwareKPICard
-                  title="File-Based Malware Count"
-                  count={89}
-                  subtitle="Stops attacks that run directly in memory or systen processes."
-                  icon={<Copy className="h-6 w-6 text-red-500" />}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <OverallMalwareCard />
               </div>
             </CardContent>
           </Card>
@@ -283,6 +340,7 @@ export function OverviewDashboard() {
                     className="h-8 w-28 rounded-lg text-sm font-medium"
                   >
                     {selectedSeverity}
+                    <ArrowDown/>
                   </Button>
                 </DropdownMenuTrigger>
 
@@ -303,10 +361,10 @@ export function OverviewDashboard() {
               </DropdownMenu>
             </CardHeader>
             <CardContent className="pt-4 h-full">
-              <div className="h-[300px] md:h-[420px] lg:h-full w-full">
-                <AlertsLineChart data={trendsData} />
-              </div>
-            </CardContent>
+             <div className="h-[300px] md:h-[420px] lg:h-full w-full">
+                <AlertsBarChart data={trendsData} />
+             </div>
+           </CardContent>
           </Card>
         </section>
       </div>
