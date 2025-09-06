@@ -24,6 +24,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/ui/select";
+import { useEffect } from "react";
 
 export type PlaybookPayload = {
   playbook_name: string;
@@ -36,6 +37,7 @@ export type PlaybookPayload = {
   trigger_condition: string;
   author: string;
   associated_alerts: string;
+  script: string;
 };
 
 const schema = z.object({
@@ -44,7 +46,7 @@ const schema = z.object({
   frequency: z.enum(["Once", "Regular", "Daily", "Weekly", "Monthly"]),
   severity: z.enum(["Low", "Medium", "High", "Critical"]),
   scope: z.enum(["Local", "Global"]),
-  // Support "-" for Global and numbers for Local (no conditional behavior enforced)
+  script: z.string().trim().min(1, "Script is required"),
   agentId: z.union([z.literal("-"), z.coerce.number().int().nonnegative()]),
   attack_category: z.string().trim().min(1, "Attack category is required"),
   trigger_condition: z.string().trim().min(1, "Trigger/Use case is required"),
@@ -93,6 +95,7 @@ export default function PlaybookFormDialog({
     defaultValues: {
       playbook_name: initialValues?.playbook_name ?? "",
       description: initialValues?.description ?? "",
+      script: initialValues?.script ?? "",
       frequency:
         (initialValues?.frequency as FormValues["frequency"]) ?? "Once",
       severity: (initialValues?.severity as FormValues["severity"]) ?? "Low",
@@ -106,6 +109,13 @@ export default function PlaybookFormDialog({
   });
 
   const scope = watch("scope");
+  const agentId = watch("agentId") as FormValues["agentId"];
+
+  useEffect(() => {
+    if (scope === "Global" && agentId !== "-") {
+      setValue("agentId", "-", { shouldDirty: true, shouldValidate: true });
+    }
+  }, [scope, agentId, setValue]);
 
   const submit = handleSubmit(async (vals) => {
     const body: PlaybookPayload = {
@@ -119,6 +129,7 @@ export default function PlaybookFormDialog({
       trigger_condition: vals.trigger_condition.trim(),
       author: vals.author.trim(),
       associated_alerts: vals.associated_alerts.trim(),
+      script: vals.script.trim(),
     };
     await onSave?.(body);
     onOpenChange?.(false);
@@ -126,7 +137,7 @@ export default function PlaybookFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-hidden p-0">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden p-0">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-xl">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -138,7 +149,7 @@ export default function PlaybookFormDialog({
             <Label htmlFor="playbook_name">Playbook Name</Label>
             <Input
               id="playbook_name"
-              placeholder='e.g., "Custom Test Workflow"'
+              placeholder='e.g. "Custom Test Workflow"'
               className="mt-2"
               {...register("playbook_name")}
             />
@@ -155,9 +166,6 @@ export default function PlaybookFormDialog({
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                   <Label>Scope</Label>
-                  <span className="text-xs text-muted-foreground">
-                    Local or Global
-                  </span>
                 </div>
                 <div className="min-w-[180px]">
                   <Select
@@ -189,13 +197,17 @@ export default function PlaybookFormDialog({
             <div className="rounded-lg border p-3">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col">
-                  <Label>Agent ID</Label>
-                  <span className="text-xs text-muted-foreground">
-                    Select “-” for Global if needed
-                  </span>
+                  <Label
+                    className={`${
+                      scope === "Local" ? "opacity-100" : "opacity-50"
+                    }`}
+                  >
+                    Agent ID
+                  </Label>
                 </div>
                 <div className="min-w-[180px]">
                   <Select
+                    disabled={scope === "Global"}
                     value={String(watch("agentId"))}
                     onValueChange={(v) => {
                       const parsed: "-" | number = v === "-" ? "-" : Number(v);
@@ -237,7 +249,7 @@ export default function PlaybookFormDialog({
               </Label>
               <Input
                 id="trigger_condition"
-                placeholder='e.g., "Manual Run" or "Detection of suspicious PowerShell/WMI"'
+                placeholder='e.g. "Manual Run"'
                 className="mt-2"
                 {...register("trigger_condition")}
               />
@@ -282,7 +294,7 @@ export default function PlaybookFormDialog({
               <Label htmlFor="attack_category">Attack Category</Label>
               <Input
                 id="attack_category"
-                placeholder='e.g., "Generic" or "Defense Evasion, Execution (T1059, T1547, T1047)"'
+                placeholder='e.g. "Generic" or "Defense Evasion"'
                 className="mt-2"
                 {...register("attack_category")}
               />
@@ -328,7 +340,7 @@ export default function PlaybookFormDialog({
               <Label htmlFor="author">Author</Label>
               <Input
                 id="author"
-                placeholder='e.g., "Analyst (Simranjeet)"'
+                placeholder='e.g. "Analyst"'
                 className="mt-2"
                 {...register("author")}
               />
@@ -342,7 +354,7 @@ export default function PlaybookFormDialog({
               <Label htmlFor="associated_alerts">Associated Alerts</Label>
               <Input
                 id="associated_alerts"
-                placeholder='e.g., "Precautionary" or "6 Incidents"'
+                placeholder='e.g. "Precautionary"'
                 className="mt-2"
                 {...register("associated_alerts")}
               />
@@ -354,13 +366,28 @@ export default function PlaybookFormDialog({
             </div>
           </div>
 
+          <div className="mt-4">
+            <Label htmlFor="associated_alerts">Script Text</Label>
+            <Input
+              id="script_text"
+              placeholder='e.g. "Write-Host "Hello script!""'
+              className="mt-2"
+              {...register("script")}
+            />
+            {errors.associated_alerts && (
+              <p className="mt-1 text-xs text-destructive">
+                {errors.associated_alerts.message}
+              </p>
+            )}
+          </div>
+
           {/* Row 6: Description */}
           <div className="mt-4">
             <Label htmlFor="description">Notes / Description</Label>
             <Textarea
               id="description"
-              placeholder='e.g., "Workflow for testing automation steps"'
-              className="mt-2 min-h-28"
+              placeholder='e.g. "Workflow for testing automation steps"'
+              className="mt-2 min-h-16"
               {...register("description")}
             />
             {errors.description && (
@@ -369,21 +396,18 @@ export default function PlaybookFormDialog({
               </p>
             )}
           </div>
-
-          <div className="h-4" />
         </form>
 
-        <DialogFooter className="px-6 pb-6 gap-2">
+        <DialogFooter className="px-6 pb-4 gap-2">
           <Button type="button" variant="outline" onClick={() => onCancel?.()}>
             Cancel
           </Button>
           <Button
             type="submit"
-            form="__implicit" // not used, but keep Button as submit via form submitter below
+            form="__implicit"
             onClick={(e) => {
               e.preventDefault();
               (document.activeElement as HTMLElement)?.blur?.();
-              // submit via handleSubmit
               void submit();
             }}
             disabled={!isValid || isSubmitting}

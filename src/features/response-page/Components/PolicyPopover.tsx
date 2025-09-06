@@ -46,7 +46,6 @@ const baseSchema = z.object({
   policy_rule_type: z.enum(["parentChild", "cmdline_string", "blockProcess"]),
   rule_desc: z.string().trim().min(1, "Rule description is required"),
   parent_process: optionalText,
-  child_process: optionalText,
   target_process: optionalText,
   cmdline_string: optionalText,
 });
@@ -73,13 +72,6 @@ const formSchema = baseSchema.superRefine((data, ctx) => {
         code: z.ZodIssueCode.custom,
         message: "Parent process name is required",
         path: ["parent_process"],
-      });
-    }
-    if (!data.child_process) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Child process name is required",
-        path: ["child_process"],
       });
     }
   } else if (data.policy_rule_type === "cmdline_string") {
@@ -115,37 +107,24 @@ export interface AgentOption {
 }
 
 export interface PolicyRuleFormDialogProps {
-  /** Control the dialog externally (optional). If omitted, component is uncontrolled. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-
-  /** Called with normalized payload on Save */
   onSave?: (payload: NormalizedPayload) => void;
-
-  /** Called when user cancels/closes */
   onCancel?: () => void;
-
-  /** Provide agent options, else sample defaults are used */
   agentOptions?: AgentOption[];
-
-  /** Optional initial values */
   initialValues?: Partial<BaseForm> & {
-    id?: string; // if editing an existing rule
+    id?: string;
   };
-
-  /** Optional title/description override */
   title?: string;
   description?: string;
 }
 
-// ---------- Normalized Submit Payload ----------
 export type NormalizedPayload = {
   scope: Scope;
-  agent_id: string; // "-" for global
-  policy_rule_type: policy_rule_type;
+  agent_id: string;
+  policy_rule_type: string; // Pass to backend as human-readable names
   rule_desc: string;
   parent_process?: string;
-  child_process?: string;
   target_process?: string;
   cmdline_string?: string;
 };
@@ -163,7 +142,6 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
     description = "Define the rule details. Fields adapt to Rule Type and Scope.",
   } = props;
 
-  // Allow uncontrolled open if not driven by parent
   const [uncontrolledOpen, setUncontrolledOpen] = useState(true);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
@@ -186,7 +164,7 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
     setValue,
     resetField,
     watch,
-    formState: { errors, isSubmitting, isValid, isDirty },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<BaseForm>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
@@ -196,7 +174,6 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
       policy_rule_type: initialValues?.policy_rule_type ?? "blockProcess",
       rule_desc: initialValues?.rule_desc ?? "",
       parent_process: initialValues?.parent_process ?? undefined,
-      child_process: initialValues?.child_process ?? undefined,
       target_process: initialValues?.target_process ?? undefined,
       cmdline_string: initialValues?.cmdline_string ?? undefined,
     },
@@ -210,7 +187,6 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
     if (scope === "global") {
       setValue("agent_id", "-", { shouldValidate: true, shouldDirty: true });
     } else {
-      // Local: if agent is "-", clear to force selection
       if (watch("agent_id") === "-") {
         setValue("agent_id", undefined, {
           shouldValidate: true,
@@ -218,24 +194,7 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope]);
-
-  // When policy type changes, clear irrelevant fields to avoid stale data
-  useEffect(() => {
-    if (policyType === "parentChild") {
-      resetField("target_process");
-      resetField("cmdline_string");
-    } else if (policyType === "cmdline_string") {
-      resetField("parent_process");
-      resetField("child_process");
-    } else if (policyType === "blockProcess") {
-      resetField("parent_process");
-      resetField("child_process");
-      resetField("cmdline_string");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [policyType]);
 
   // Normalize before submit
   function normalize(values: BaseForm): NormalizedPayload {
@@ -246,10 +205,14 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
     return {
       scope,
       agent_id: scope === "global" ? "-" : (values.agent_id as string),
-      policy_rule_type,
+      policy_rule_type:
+        policy_rule_type === "parentChild"
+          ? "Unusual Parent Child Process"
+          : policy_rule_type === "cmdline_string"
+          ? "Suspicious String in Command Line"
+          : "Block a Process",
       rule_desc: rule_desc.trim(),
       parent_process: isParentChild ? values.parent_process?.trim() : undefined,
-      child_process: isParentChild ? values.child_process?.trim() : undefined,
       target_process:
         policyType === "blockProcess" || isCmdline
           ? values.target_process?.trim()
@@ -388,79 +351,27 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
             </div>
           </div>
 
-          {/* Conditional fields */}
-          {policyType === "parentChild" && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="parent_process">Parent Process Name</Label>
-                <Input
-                  id="parent_process"
-                  placeholder="e.g. winword.exe"
-                  className="mt-2"
-                  {...register("parent_process")}
-                />
-                {errors.parent_process && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {errors.parent_process.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="child_process">Child Process Name</Label>
-                <Input
-                  id="child_process"
-                  placeholder="e.g., powershell.exe"
-                  className="mt-2"
-                  {...register("child_process")}
-                />
-                {errors.child_process && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {errors.child_process.message}
-                  </p>
-                )}
-              </div>
+          {/* Parent Process and Target Process in same row */}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="parent_process">Parent Process Name</Label>
+              <Input
+                id="parent_process"
+                placeholder="e.g. winword.exe"
+                className="mt-2"
+                {...register("parent_process")}
+              />
+              {errors.parent_process && (
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.parent_process.message}
+                </p>
+              )}
             </div>
-          )}
-
-          {policyType === "cmdline_string" && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="target_process">Target Process Name</Label>
-                <Input
-                  id="target_process"
-                  placeholder="e.g. powershell.exe"
-                  className="mt-2"
-                  {...register("target_process")}
-                />
-                {errors.target_process && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {errors.target_process.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="cmdline_string">String in Command Line</Label>
-                <Input
-                  id="cmdline_string"
-                  placeholder='e.g. "Invoke-WebRequest"'
-                  className="mt-2"
-                  {...register("cmdline_string")}
-                />
-                {errors.cmdline_string && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {errors.cmdline_string.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {policyType === "blockProcess" && (
-            <div className="mt-4">
+            <div>
               <Label htmlFor="target_process">Target Process Name</Label>
               <Input
                 id="target_process"
-                placeholder="e.g. mimikatz.exe"
+                placeholder="e.g. powershell.exe"
                 className="mt-2"
                 {...register("target_process")}
               />
@@ -470,7 +381,23 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
                 </p>
               )}
             </div>
-          )}
+          </div>
+
+          {/* String in Command Line field visible always */}
+          <div className="mt-4">
+            <Label htmlFor="cmdline_string">String in Command Line</Label>
+            <Input
+              id="cmdline_string"
+              placeholder='e.g. "Invoke-WebRequest"'
+              className="mt-2"
+              {...register("cmdline_string")}
+            />
+            {errors.cmdline_string && (
+              <p className="mt-1 text-xs text-destructive">
+                {errors.cmdline_string.message}
+              </p>
+            )}
+          </div>
 
           {/* Rule Description */}
           <div className="mt-4">
@@ -496,11 +423,10 @@ export default function PolicyRuleFormDialog(props: PolicyRuleFormDialogProps) {
           </Button>
           <Button
             type="submit"
-            form="__implicit" // not used, but keep Button as submit via form submitter below
+            form="__implicit"
             onClick={(e) => {
               e.preventDefault();
               (document.activeElement as HTMLElement)?.blur?.();
-              // submit via handleSubmit
               void submit();
             }}
             disabled={!isValid || isSubmitting}

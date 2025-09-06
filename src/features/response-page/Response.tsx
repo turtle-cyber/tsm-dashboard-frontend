@@ -19,7 +19,6 @@ import PolicyRuleFormDialog from "./Components/PolicyPopover";
 import PlaybookFormDialog from "./Components/ResponsePopover";
 
 const policyTableHeader = [
-  "RuleID",
   "Scope",
   "AgentID",
   "Policy Rule Type",
@@ -204,12 +203,12 @@ const Response = () => {
                   ) : (
                     policyData.map((row: any) => (
                       <TableRow key={row?._id}>
-                        <TableCell className="justify-items-center">
+                        {/* <TableCell className="justify-items-center">
                           <TruncText
                             value={row?._id}
                             maxWidth="max-w-[200px]"
                           />
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell className="justify-items-center">
                           <TruncText value={row?.scope} />
                         </TableCell>
@@ -228,6 +227,7 @@ const Response = () => {
                         <TableCell className="justify-items-center">
                           <TruncText
                             value={row.rule_desc ? row.rule_desc : "N/A"}
+                            maxWidth="max-w-[300px]"
                           />
                         </TableCell>
                         <TableCell className="justify-items-center">
@@ -236,7 +236,7 @@ const Response = () => {
                             maxWidth="max-w-[200px]"
                           />
                         </TableCell>
-                        <TableCell className="justify-items-center">
+                        <TableCell className="justify-center flex">
                           <Button
                             onClick={() => {
                               toast.success("add new");

@@ -14,6 +14,7 @@ import {
   MonitorSpeaker,
   Eye,
   Users,
+  Wrench,
   Menu,
   X,
 } from "lucide-react";
@@ -42,7 +43,7 @@ const navigationItems = [
 const responseItems = [
   {
     title: "Response",
-    icon: AlertTriangle,
+    icon: Wrench,
     url: "/response",
     section: "response",
   },
